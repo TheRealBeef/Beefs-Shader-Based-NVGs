@@ -24,18 +24,18 @@ function print_dbg( text , ...)
 end
 
 function get_on_start()
-	nvg_gain_max = beef_nvgs_mcm.get_config("nvg_gain_max_mcm")
-	nvg_gain_min = beef_nvgs_mcm.get_config("nvg_gain_min_mcm")
-	nvg_washout_thresh = beef_nvgs_mcm.get_config("nvg_washout_thresh_mcm")
-	nvg_view_through_scope = beef_nvgs_mcm.get_config("nvg_view_through_scope_mcm")
+	nvg_gain_max = z_beef_nvgs_mcm.get_config("nvg_gain_max_mcm")
+	nvg_gain_min = z_beef_nvgs_mcm.get_config("nvg_gain_min_mcm")
+	nvg_washout_thresh = z_beef_nvgs_mcm.get_config("nvg_washout_thresh_mcm")
+	nvg_view_through_scope = z_beef_nvgs_mcm.get_config("nvg_view_through_scope_mcm")
 end
 
 local function on_option_change()
 	if is_mcm_open then
-		nvg_gain_max = beef_nvgs_mcm.get_config("nvg_gain_max_mcm")
-		nvg_gain_min = beef_nvgs_mcm.get_config("nvg_gain_min_mcm")
-		nvg_washout_thresh = beef_nvgs_mcm.get_config("nvg_washout_thresh_mcm")
-		nvg_view_through_scope = beef_nvgs_mcm.get_config("nvg_view_through_scope_mcm")
+		nvg_gain_max = z_beef_nvgs_mcm.get_config("nvg_gain_max_mcm")
+		nvg_gain_min = z_beef_nvgs_mcm.get_config("nvg_gain_min_mcm")
+		nvg_washout_thresh = z_beef_nvgs_mcm.get_config("nvg_washout_thresh_mcm")
+		nvg_view_through_scope = z_beef_nvgs_mcm.get_config("nvg_view_through_scope_mcm")
 	end
 end
 
