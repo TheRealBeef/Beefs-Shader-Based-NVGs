@@ -36,9 +36,12 @@ _out main( v2p I )
 	
 			float2 texturecoord = I.sv.xy / screen_res.xy;
 			float2 texturecoord_2 = I.sv.xy / screen_res.xy;
+			float lua_param_nvg_generation = floor(shader_param_8.x);             // 1, 2, or 3
+			float lua_param_nvg_num_tubes = fmod(shader_param_8.x,1.0f);          // 1, 2, 4, 1.1, or 1.2
+			float lua_param_nvg_gain_current = floor(shader_param_8.y) / 10.0f;
+			float lua_param_vignette_current = floor(shader_param_8.z) / 100.0f;
 	
-			if (shader_param_8.x > 0 && ((compute_lens_mask(aspect_ratio_correction(texturecoord), shader_param_8.y) == 1.0f || compute_lens_mask(aspect_ratio_correction(texturecoord_2), shader_param_8.y) == 1.0f)))
-			//if (shader_param_8.x > 0 && (compute_lens_mask(aspect_ratio_correction(texturecoord), shader_param_8.x) == 1))
+			if (lua_param_nvg_generation > 0 && ((compute_lens_mask(aspect_ratio_correction(texturecoord), lua_param_nvg_num_tubes) == 1.0f || compute_lens_mask(aspect_ratio_correction(texturecoord_2), lua_param_nvg_num_tubes) == 1.0f)))
 			{
 			o.low.r = dot(o.low.rgb * 5.0f, luma_conversion_coeff);
 			o.high.r = dot(o.high.rgb * 5.0f, luma_conversion_coeff);
@@ -46,14 +49,14 @@ _out main( v2p I )
 			o.low.gb = 0.0f;
 			o.high.gb = 0.0f;
 			
-			o.low *= shader_param_8.w;
-			o.high *= shader_param_8.w;
+			o.low *= lua_param_nvg_gain_current;
+			o.high *= lua_param_nvg_gain_current;
 			
 			o.high = clamp(o.high,0.0,1.0);
 			o.low= clamp(o.low,0.0,1.0);
 			
-			float vignette = calc_vignette(shader_param_8.y, texturecoord, gen_1_vignette_amount);
-			float vignette_2 = calc_vignette(shader_param_8.y, texturecoord_2, gen_1_vignette_amount);
+			float vignette = calc_vignette(lua_param_nvg_num_tubes, texturecoord, lua_param_vignette_current);
+			float vignette_2 = calc_vignette(lua_param_nvg_num_tubes, texturecoord_2, lua_param_vignette_current);
 			o.low *= (vignette * vignette_2);
 			o.high *= (vignette * vignette_2);
 			}

@@ -167,8 +167,12 @@ _out main ( _input I, uint iSample : SV_SAMPLEINDEX )
 	
 /////////// BEEFS NVGS CHANGES ///////////
 
-		if (shader_param_8.x > 0.0f && compute_lens_mask(aspect_ratio_correction(I.tc0), shader_param_8.y) == 1.0f)
-		// if shader_param_8.x > 0, then NVGs are enabled
+		float lua_param_nvg_generation = floor(shader_param_8.x);             // 1, 2, or 3
+		float lua_param_nvg_num_tubes = fmod(shader_param_8.x,1.0f);          // 1, 2, 4, 1.1, or 1.2
+		float lua_param_nvg_gain_current = floor(shader_param_8.y) / 10.0f; 
+		float lua_param_vignette_current = floor(shader_param_8.z) / 100.0f;
+		
+		if (lua_param_nvg_generation > 0.0f && compute_lens_mask(aspect_ratio_correction(I.tc0), lua_param_nvg_num_tubes) == 1.0f)
 		{
 	        tonemap(o.low, o.high, color, 10.0f);
 		
@@ -187,8 +191,8 @@ _out main ( _input I, uint iSample : SV_SAMPLEINDEX )
 			o.low.b = dot(D.rgb, luma_conversion_coeff);
 			o.high.b = o.low.b;
 			
-			o.low *= shader_param_8.w;
-			o.high *= shader_param_8.w;
+			o.low *= lua_param_nvg_gain_current;
+			o.high *= lua_param_nvg_gain_current;
 				
 			// Extra
 			o.low.a = skyblend;
@@ -196,7 +200,8 @@ _out main ( _input I, uint iSample : SV_SAMPLEINDEX )
 					
 
 			// APPLY VIGNETTE
-			float vignette = calc_vignette(shader_param_8.y, I.tc0, gen_1_vignette_amount);
+			float vignette = calc_vignette(lua_param_nvg_num_tubes, I.tc0, lua_param_vignette_current);
+			
 			o.high = clamp(o.high,0.0,1.0);
 			o.low= clamp(o.low,0.0,1.0);
 			

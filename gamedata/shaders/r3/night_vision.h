@@ -21,11 +21,30 @@
 // GLOBAL DEFINITIONS AND INCLUDES
 ///////////////////////////////////////////////////////
 
+
 	// UNIFORMS
-	uniform float4  shader_param_8; // x = generation, y = num tubes z = washout thresh w = gain adjustment
-	uniform float4 shader_param_7; // x = glitch power
-	float4 near_far_plane; 
-		
+	uniform float4  shader_param_8;
+	
+		// LUA PACKING
+		// x_1 = tostring(nvg_generation)                           -- Generation (1,2,3) - outputs 1.x to 3.x
+		// x_2 = tostring(nvg_num_tubes)                            -- Num Tubes (1,2,4,11,12) outputs x.1, x.2, x.4, x.11, or x.12
+		// y_1 = tostring(math.floor(nvg_gain_current * 10))        -- Gain Adjust (0.1 to 3) -- outputs 1.y to 30.y in 1. increment
+		// y_2 = tostring(math.floor(nvg_washout_thresh * 10))      -- Washout Thresh (0.0 - 0.9) - outputs y.0 to y.9 in .1 increment
+		// z_1 = tostring(math.floor(vignette_current * 100))       -- Vignette Amount (0.0 to 1.0) outputs 0.z to 100.z in 1. increment
+		// z_2 = tostring(math.floor(glitch_power * 10))            -- Glitch Power (0.0 - 0.9) - outputs z.0 to z.9 in .1 increment
+		// w_1 = tostring(nvg_mode)                                 -- Mode (0,1) - outputs 0.w or 1.w depending on mode
+		// w_2 = tostring(0)                                        -- unused - outputs w.0
+
+		// SHADER UNPACKING
+		// float lua_param_nvg_generation = floor(shader_param_8.x);             // 1, 2, or 3
+		// float lua_param_nvg_num_tubes = fmod(shader_param_8.x,1.0f);          // 1, 2, 4, 1.1, or 1.2
+		// float lua_param_nvg_gain_current = floor(shader_param_8.y) / 10.0f;   // 0.0 to 3.0
+		// float lua_param_nvg_washout_thresh = fmod(shader_param_8.y,1.0f);     // 0.0 to 0.9
+		// float lua_param_vignette_current = floor(shader_param_8.z) / 100.0f;  // 0.0 to 1.0
+		// float lua_param_glitch_power = fmod(shader_param_8.z,1.0f);           // 0.0 to 0.9
+		// float lua_param_nvg_mode = floor(shader_param_8.w);                   // 0 or 1
+
+									
 	// Constants
 	#define luma_conversion_coeff float3 (0.299, 0.587, 0.114) // When we convert to YUV, these are the coefficients for Y (since we discard UV)
 	#define farthest_depth float (25.0f) 				// The farthest far place that we can reach, maybe this is supposed to be 10k not 1k??
