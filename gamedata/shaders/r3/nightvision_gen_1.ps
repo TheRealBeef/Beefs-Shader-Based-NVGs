@@ -24,48 +24,12 @@
 
 float3 bokeh_pass_3 (float image, float2 tc)
 {
-			
-	//// BOKEH PASS 2 ////
-
-	// SAMPLES - R channel is YUV discard UV, G is lightmap, B is albedo
-
-	// BLUR
-	float Pi = 6.28318530718; // Pi*2
-
-	float blur_directions = 12.0; // BLUR DIRECTIONS (Default 16.0 - More is better but slower)
-	float blur_quality = 4.0; // BLUR QUALITY (Default 4.0 - More is better but slower)
-	float blur_radius = 3; // returns blur_radius coefficient of 0 at start of farplane and 1 at end of farplane - 
-
-	float3 color = 0.0f;
-	float3 color_average = 0.0f;
-	float light_avgs = 0.0f;
-	
-	// where we store our weighted
-	float weight = 0.0f;
-	// where we store the total weighted
-	float total_weight = 0.0f;
-	
-	
-	// Blur calculations
-	for(float i=1.0; i<=blur_quality; i++) // how far away are we
-	{
-		for( float d=0.0; d<Pi; d+=Pi/blur_directions) // where are we around the circle
-		{
-			// pull image at our sample point
-			color = s_blur_8.SampleLevel(smp_rtlinear, tc + (float2(cos(d),sin(d))*blur_radius*i/screen_res.xy),0).rgb;
-			color += s_blur_4.SampleLevel(smp_rtlinear, tc + (float2(cos(d),sin(d))*blur_radius*i/screen_res.xy),0).rgb;
-			if (color.g > 0.0f) { color.g *= 1.0f; light_avgs += 1.0f;}
-			else {light_avgs += 0.3;}
-			//weight = blur_quality - pow((i - 1),0.5);
-			color_average += color;  // * weight;
-			//total_weight += weight;
-			
-		}
-	}
-		
-		//image.rb = color_average.rb / (blur_directions*blur_quality);
-		image = color_average.g / light_avgs;
-			
+	float Pi = 6.28318530718; float blur_directions = 8.0; float blur_quality = 4.0; float blur_radius = 3; float3 color = 0.0f; float3 color_average = 0.0f;
+	float light_avgs = 0.0f; float weight = 0.0f; float total_weight = 0.0f;
+	for(float i=1.0; i<=blur_quality; i++) { for( float d=0.0; d<Pi; d+=Pi/blur_directions) {
+		color = s_blur_8.SampleLevel(smp_rtlinear, tc + (float2(cos(d),sin(d))*blur_radius*i/screen_res.xy),0).rgb;
+		color += s_blur_4.SampleLevel(smp_rtlinear, tc + (float2(cos(d),sin(d))*blur_radius*i/screen_res.xy),0).rgb;
+		if (color.g > 0.0f) { color.g *= 1.0f; light_avgs += 1.0f;}	else {light_avgs += 0.5;} color_average += color; } } image = color_average.g / light_avgs;
 	return image;
 }
 
@@ -87,8 +51,8 @@ float4 main(p_screen I) : SV_Target
 	// STEP 0 - MAIN FUNCTION
 	///////////////////////////////////////////////////////
 	float3 half_res_blur = s_blur_2.Sample(smp_rtlinear, I.tc0).rgb;
-	float lua_param_nvg_num_tubes = frac(shader_param_8.x) * 10.0f;  
 	
+	float lua_param_nvg_num_tubes = frac(shader_param_8.x) * 10.0f;  
 	if (compute_lens_mask(corrected_texturecoords, lua_param_nvg_num_tubes) == 1) // see if we're inside the lens mask
 	{
 			// GRAB SAMPLES FOR NVG SHADER
@@ -101,28 +65,35 @@ float4 main(p_screen I) : SV_Target
 				frac(sin(dot(I.tc0-fmod(I.tc0,float2(3.0,3.0)/screen_res.xy), float2(12.0, 78.0) + (timers.x) )) * 78372.0), 
 				frac(sin(dot(I.tc0, float2(12.0, 78.0) + (timers.x) )) * 37857.0));
 			
-			float depth = s_position.Load(int3(I.tc0 * screen_res.xy,0),0).z; // Sample the depth buffer in a better way
+			//float depth = s_position.Load(int3(I.tc0 * screen_res.xy,0),0).z; // Sample the depth buffer in a better way
 			//float depth = pow(blurred_depth(I.tc0),2)*1000;
-			//float depth = blurred_depth(I.tc0,10,25);
+			float depth = blurred_depth(I.tc0);
 
-			image.r = lerp(half_res_blur.r,image.r,0.0f);
+			//image.r = lerp(half_res_blur.r,image.r,0.6f);
+			//image = pow(image,0.75);
 
-			// DIM FAR OBJECTS (EXCEPT SKY)
-			if (depth < 800)
+			image = lerp(image,half_res_blur,clamp(1-smoothstep(0,15,depth),0.4,1)); // NEAR BLUR
+				
+			if (depth < 1000)
 			{
 				float light_att = pow(1.0f-(smoothstep(5,300,depth)),0.5); // Distance from full brightness to full black
-				if ((image.r+image.g) < 1.0f) 
+				if ((image.r+image.g) < 0.9f) 
 				{
 					image.r *= (light_att+0.1f); //Apply light attenuation (plus offset to prevent sky turning black)
 				} 
 			}
 		
-			// APPLY LUMA SHARPEN
-			image = lerp(luma_sharpen(half_res_blur.rgb, I.tc0),half_res_blur.rgb,gen_1_luma_sharpen_factor);
+			// GLITCH EFFECT -- TO DO
+			float lua_param_glitch_power = fmod(shader_param_8.z,1.0f); 
+			
+			if (lua_param_glitch_power > 0.0f)
+			{
+			image = lerp(image, glitchEffect(image, I.tc0, lua_param_glitch_power),0.5);
+			}
 
 			// APPLY BLOOM / WASHOUT
 			float addon = bokeh_pass_3( (eighth_res_bloom.g + quarter_res_bloom.g),I.tc0);
-			float addon_hard = max(addon - 0.05,0.0) * 1.0f;
+			float addon_hard = max(addon - 0.7,0.0) * 2.0f;
 			float addon_soft = (max(half_res_blur.g - 0.6,0.0f) / 0.6) / 1.0f;
 //			addon = max(addon - 0.01,0) * 3;
 			image = image + (float3)addon_soft + (float3)addon_hard;

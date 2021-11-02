@@ -103,7 +103,7 @@ float compute_lens_mask(float2 masktc, float num_tubes)
 				return 0.0f;
 				}
 		}
-	else if (num_tubes > 2.99f && num_tubes < 3.01f) // Four Tubes
+	else if (num_tubes > 3.99f && num_tubes < 4.01f) // Four Tubes
 		{
 		if  (((step(distance(masktc,quad_tube_offset_1), tube_radius) == 1) || (step(distance(masktc,quad_tube_offset_2), tube_radius) == 1)) || ((step(distance(masktc,quad_tube_offset_3), tube_radius) == 1) || (step(distance(masktc,quad_tube_offset_4), tube_radius) == 1)))
 				{

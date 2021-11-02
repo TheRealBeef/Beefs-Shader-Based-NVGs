@@ -1,7 +1,7 @@
 -- If you don't use MCM, change your defaults from here.
 local defaults = {
 	["nvg_gain_max_mcm"] = 2.0,
-	["nvg_gain_min_mcm"] = 0.3,
+	["nvg_gain_min_mcm"] = 0.5,
 	["nvg_washout_thresh_mcm"] = 0.1,
 	["nvg_view_through_scope_mcm"] = false
 }

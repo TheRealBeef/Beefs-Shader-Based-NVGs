@@ -67,7 +67,7 @@ float4 main(p_screen I) : SV_Target
 		// QUARTER RES BLUR - PASS 2 - R = LUMA, G = LIGHTMAP, B = ALBEDO
 		else if (blur_params.x == 0 && blur_params.z == (screen_res.x / 4)) // quarter and eighth res circular bokeh pass 2
 		{
-			float Pi = 6.28318530718; float blur_directions = 24.0; float blur_quality = 4.0; float blur_radius = 4; float3 color = 0.0f;
+			float Pi = 6.28318530718; float blur_directions = 16.0; float blur_quality = 4.0; float blur_radius = 4; float3 color = 0.0f;
 			float3 color_average = s_image.Sample(smp_rtlinear, I.tc0).rgb;	float light_avgs = 0.0f; float weight = 0.0f; float total_weight = 0.0f;
 			for(float i=1.0; i<=	blur_quality; i++) { for( float d=0.0; d<Pi; d+=Pi/blur_directions) {
 				color = s_image.SampleLevel(smp_rtlinear, I.tc0 + (float2(cos(d),sin(d))*blur_radius*i/screen_res.xy),0).rgb;

@@ -69,30 +69,23 @@ float4 main(p_screen I) : SV_Target
 			//float depth = pow(blurred_depth(I.tc0),2)*1000;
 			float depth = blurred_depth(I.tc0);
 
-			//image.r = lerp(half_res_blur.r,image.r,0.6f);
-			//image = pow(image,0.75);
+			image.r = lerp(half_res_blur.r,image.r,0.0f);
 
 				image = lerp(image,half_res_blur,clamp(1-smoothstep(0,15,depth),0.4,1)); // NEAR BLUR
-				
-			if (depth < 1000)
 			{
 				float light_att = pow(1.0f-(smoothstep(5,300,depth)),0.5); // Distance from full brightness to full black
-				if ((image.r+image.g) < 0.9f) 
+				if ((image.r+image.g) < 1.0f) 
 				{
 					image.r *= (light_att+0.1f); //Apply light attenuation (plus offset to prevent sky turning black)
 				} 
 			}
 		
-			// GLITCH EFFECT -- TO DO
-			float lua_param_glitch_power = fmod(shader_param_8.z,1.0f); 
-				if (lua_param_glitch_power > 0.0f)
-				{
-				image = lerp(image, glitchEffect(image, I.tc0, lua_param_glitch_power),0.5);
-				}
+			// APPLY LUMA SHARPEN
+			image = lerp(luma_sharpen(half_res_blur.rgb, I.tc0),half_res_blur.rgb,gen_2_luma_sharpen_factor);
 
 			// APPLY BLOOM / WASHOUT
 			float addon = bokeh_pass_3( (eighth_res_bloom.g + quarter_res_bloom.g),I.tc0);
-			float addon_hard = max(addon - 0.7,0.0) * 2.0f;
+			float addon_hard = max(addon - 0.05,0.0) * 1.0f;
 			float addon_soft = (max(half_res_blur.g - 0.6,0.0f) / 0.6) / 1.0f;
 //			addon = max(addon - 0.01,0) * 3;
 			image = image + (float3)addon_soft + (float3)addon_hard;

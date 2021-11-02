@@ -1,6 +1,6 @@
 -- Beef NVG MCM values
 local nvg_gain_max = 2.0		-- max value for nvg gain (brightness)
-local nvg_gain_min = 0.3		-- min value for nvg gain (brightness)
+local nvg_gain_min = 0.5		-- min value for nvg gain (brightness)
 local nvg_washout_thresh = 0.1			-- used to calculate washout effect on light sources
 local nvg_view_through_scope = false		-- can you keep your NVGs on when looking through scope?
 
@@ -11,26 +11,17 @@ local nvg_gain_current = 1		-- current gain setting
 local gain_directionality = true -- directionality of brightness adjust
 local vignette_amount = 0.05		-- standard vignette value
 local vignette_current = 1.0		-- current vignette value, for turn-on/ turn-off effect
-local vignette_speed = 1.2 -- how fast vignette changes
+local vignette_speed = 2 -- how fast vignette changes
 local glitch_power = 0			-- how much 'glitch' to add to NVGs
 local nvg_mode = 0			-- future functionality
 local crt_latch = false
 local nv_eff = {}
 
-function get_on_start()
-	nvg_gain_max = z_beef_nvgs_mcm.get_config("nvg_gain_max_mcm")
-	nvg_gain_min = z_beef_nvgs_mcm.get_config("nvg_gain_min_mcm")
-	nvg_washout_thresh = z_beef_nvgs_mcm.get_config("nvg_washout_thresh_mcm")
-	nvg_view_through_scope = z_beef_nvgs_mcm.get_config("nvg_view_through_scope_mcm")
-end
-
-local function on_option_change()
-	if is_mcm_open then
-		nvg_gain_max = z_beef_nvgs_mcm.get_config("nvg_gain_max_mcm")
-		nvg_gain_min = z_beef_nvgs_mcm.get_config("nvg_gain_min_mcm")
-		nvg_washout_thresh = z_beef_nvgs_mcm.get_config("nvg_washout_thresh_mcm")
-		nvg_view_through_scope = z_beef_nvgs_mcm.get_config("nvg_view_through_scope_mcm")
-	end
+function on_option_change()
+		nvg_gain_max = z_beefs_nvgs_mcm.get_config("nvg_gain_max_mcm")
+		nvg_gain_min = z_beefs_nvgs_mcm.get_config("nvg_gain_min_mcm")
+		nvg_washout_thresh = z_beefs_nvgs_mcm.get_config("nvg_washout_thresh_mcm")
+		nvg_view_through_scope = z_beefs_nvgs_mcm.get_config("nvg_view_through_scope_mcm")
 end
 
 function pack_nvg_data()
@@ -104,7 +95,6 @@ function brightness_adjust()
 				nvg_gain_current = nvg_gain_max
 				gain_directionality = not gain_directionality
 			end
-			update_nvgs()
 			
 		elseif not gain_directionality and nvg_gain_current >= nvg_gain_min then
 			
@@ -115,8 +105,9 @@ function brightness_adjust()
 				gain_directionality = not gain_directionality
 			end
 			
-			update_nvgs()
+			
 		end
+		update_nvgs()
 	end
 end
 
@@ -155,12 +146,7 @@ function actor_on_weapon_zoom_out()
 	end
 end
 
-local updated = 0
-local interval = 30
-
 function actor_on_update()
-    if time_global() < updated then return end
-    updated = time_global() + interval
 	if not crt_latch and item_device.nv_state then
 		state_change_effect()
 		update_nvgs()
@@ -183,4 +169,5 @@ function on_game_start()
 	RegisterScriptCallback("on_option_change", on_option_change)
 	RegisterScriptCallback("on_key_press", on_key_press)
 	RegisterScriptCallback("on_key_release", on_key_release)
+	on_option_change()
 end

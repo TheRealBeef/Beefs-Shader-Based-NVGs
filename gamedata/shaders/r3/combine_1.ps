@@ -200,7 +200,7 @@ _out main ( _input I, uint iSample : SV_SAMPLEINDEX )
 					
 
 			// APPLY VIGNETTE
-			float vignette = calc_vignette(lua_param_nvg_num_tubes, I.tc0, lua_param_vignette_current);
+			float vignette = calc_vignette(lua_param_nvg_num_tubes, I.tc0, lua_param_vignette_current+0.02);
 			
 			o.high = clamp(o.high,0.0,1.0);
 			o.low= clamp(o.low,0.0,1.0);
