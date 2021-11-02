@@ -174,7 +174,8 @@ _out main ( _input I, uint iSample : SV_SAMPLEINDEX )
 		
 		if (lua_param_nvg_generation > 0.0f && compute_lens_mask(aspect_ratio_correction(I.tc0), lua_param_nvg_num_tubes) == 1.0f)
 		{
-	        tonemap(o.low, o.high, color, 10.0f);
+			float lua_param_nvg_gain_offset = floor(shader_param_8.w) / 10.0f;
+	        tonemap(o.low, o.high, color, 10.0f * lua_param_nvg_gain_offset);
 		
 			// Turn split tonemapping data to YUV and discard UV
 			o.low.r = dot(o.low.rgb, luma_conversion_coeff);

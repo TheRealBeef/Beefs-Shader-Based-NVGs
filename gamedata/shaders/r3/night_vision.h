@@ -26,14 +26,14 @@
 	uniform float4  shader_param_8;
 	
 		// LUA PACKING
-		// x_1 = tostring(nvg_generation)                           -- Generation (1,2,3) - outputs 1.x to 3.x
-		// x_2 = tostring(nvg_num_tubes)                            -- Num Tubes (1,2,4,11,12) outputs x.1, x.2, x.4, x.11, or x.12
-		// y_1 = tostring(math.floor(nvg_gain_current * 10))        -- Gain Adjust (0.1 to 3) -- outputs 1.y to 30.y in 1. increment
-		// y_2 = tostring(math.floor(nvg_washout_thresh * 10))      -- Washout Thresh (0.0 - 0.9) - outputs y.0 to y.9 in .1 increment
-		// z_1 = tostring(math.floor(vignette_current * 100))       -- Vignette Amount (0.0 to 1.0) outputs 0.z to 100.z in 1. increment
-		// z_2 = tostring(math.floor(glitch_power * 10))            -- Glitch Power (0.0 - 0.9) - outputs z.0 to z.9 in .1 increment
-		// w_1 = tostring(nvg_mode)                                 -- Mode (0,1) - outputs 0.w or 1.w depending on mode
-		// w_2 = tostring(0)                                        -- unused - outputs w.0
+		//	local x_1 = tostring(nvg_generation)                           -- Generation (1,2,3) - outputs 1.x to 3.x
+		//	local x_2 = tostring(nvg_num_tubes)                            -- Num Tubes (1,2,4,11,12) outputs x.1, x.2, x.4, x.11, or x.12
+		//	local y_1 = tostring(math.floor(nvg_gain_current * 10))        -- Gain Adjust (0.1 to 3) -- outputs 1.y to 30.y in 1. increment
+		//	local y_2 = tostring(math.floor(nvg_washout_thresh * 10))      -- Washout Thresh (0.0 - 0.9) - outputs y.0 to y.9 in .1 increment
+		//	local z_1 = tostring(math.floor(vignette_current * 100))       -- Vignette Amount (0.0 to 1.0) outputs 0.z to 100.z in 1. increment
+		//	local z_2 = tostring(math.floor(glitch_power * 10))            -- Glitch Power (0.0 - 0.9) - outputs z.0 to z.9 in .1 increment
+		//	local w_1 = tostring((math.floor(nvg_gain_offset * 10)) )      -- Gain Offset (0.5 to 3.0) - outputs 5.w to 30.w in 1. increment
+		//	local w_2 = tostring(nvg_mode)                  		         -- Mode (0,1) - outputs w.0 or w.1 depending on mode
 
 		// SHADER UNPACKING
 		// float lua_param_nvg_generation = floor(shader_param_8.x);             // 1, 2, or 3
@@ -42,7 +42,8 @@
 		// float lua_param_nvg_washout_thresh = frac(shader_param_8.y);     // 0.0 to 0.9
 		// float lua_param_vignette_current = floor(shader_param_8.z) / 100.0f;  // 0.0 to 1.0
 		// float lua_param_glitch_power = frac(shader_param_8.z);           // 0.0 to 0.9
-		// float lua_param_nvg_mode = floor(shader_param_8.w);                   // 0 or 1
+		// float lua_param_nvg_gain_offset = floor(shader_param_8.w) / 10.0f;	// 0.5 to 3.0
+		// float lua_param_nvg_mode = frac(shader_param_8.w);                   // 0 or 1
 
 									
 	// Constants

@@ -3,6 +3,7 @@ local nvg_gain_max = 2.0		-- max value for nvg gain (brightness)
 local nvg_gain_min = 0.5		-- min value for nvg gain (brightness)
 local nvg_washout_thresh = 0.1			-- used to calculate washout effect on light sources
 local nvg_view_through_scope = false		-- can you keep your NVGs on when looking through scope?
+local nvg_gain_offset = 1.0		-- offset for nvg gain to accomodate for brighter/darker worlds
 
 -- Variables
 local nvg_generation = 0		-- 1, 2, or 3
@@ -20,6 +21,7 @@ local nv_eff = {}
 function on_option_change()
 		nvg_gain_max = z_beefs_nvgs_mcm.get_config("nvg_gain_max_mcm")
 		nvg_gain_min = z_beefs_nvgs_mcm.get_config("nvg_gain_min_mcm")
+		nvg_gain_offset = z_beefs_nvgs_mcm.get_config("nvg_gain_offset_mcm")
 		nvg_washout_thresh = z_beefs_nvgs_mcm.get_config("nvg_washout_thresh_mcm")
 		nvg_view_through_scope = z_beefs_nvgs_mcm.get_config("nvg_view_through_scope_mcm")
 end
@@ -32,8 +34,8 @@ function pack_nvg_data()
 	local y_2 = tostring(math.floor(nvg_washout_thresh * 10))      -- Washout Thresh (0.0 - 0.9) - outputs y.0 to y.9 in .1 increment
 	local z_1 = tostring(math.floor(vignette_current * 100))       -- Vignette Amount (0.0 to 1.0) outputs 0.z to 100.z in 1. increment
 	local z_2 = tostring(math.floor(glitch_power * 10))            -- Glitch Power (0.0 - 0.9) - outputs z.0 to z.9 in .1 increment
-	local w_1 = tostring(nvg_mode)                                 -- Mode (0,1) - outputs 0.w or 1.w depending on mode
-	local w_2 = tostring(0)                                        -- unused - outputs w.0
+	local w_1 = tostring((math.floor(nvg_gain_offset * 10)) )      -- Gain Offset (0.5 to 3.0) - outputs 5.w to 30.w in 1. increment
+	local w_2 = tostring(nvg_mode)                  		       -- Mode (0,1) - outputs w.0 or w.1 depending on mode
 
 	return "(" .. x_1 .. "." .. x_2 .. "," .. y_1 .. "." .. y_2 .. "," .. z_1 .. "." .. z_2 .. "," .. w_1 .. "." .. w_2 .. ")"
 end

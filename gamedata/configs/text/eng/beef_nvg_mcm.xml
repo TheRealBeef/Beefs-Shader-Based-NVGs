@@ -26,6 +26,14 @@
 	<string id="ui_mcm_beef_nvg_nvg_gain_min_mcm_desc">
 		<text>Lower values allow you to turn down the NVGs more - very low values will even enable you to use the NVGs during daylight.</text>
 	</string>
+	
+	<string id="ui_mcm_beef_nvg_nvg_gain_offset_mcm">
+		<text>An offset applied to world brightness.</text>
+	</string>
+	
+	<string id="ui_mcm_beef_nvg_nvg_gain_offset_mcm_desc">
+		<text>1.0 leaves world brightness as-is, larger values multiply world brightness (but not light sources).</text>
+	</string>
 
 	<string id="ui_mcm_beef_nvg_nvg_washout_thresh_mcm">
 		<text>The threshold for light source washout.</text>
@@ -37,7 +45,7 @@
 	</string>
 	
 	<string id="ui_mcm_beef_nvg_nvg_view_through_scope_mcm">
-		<text>Whether you are allowed to use NVGs while aiming down sights.</text>
+		<text>Can use NVG while Aiming Down Sights? (not implemented yet).</text>
 	</string>
 	
 	<string id="ui_mcm_beef_nvg_nvg_view_through_scope_mcm_desc">
