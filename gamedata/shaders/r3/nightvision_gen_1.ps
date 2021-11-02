@@ -87,7 +87,7 @@ float4 main(p_screen I) : SV_Target
 	// STEP 0 - MAIN FUNCTION
 	///////////////////////////////////////////////////////
 	float3 half_res_blur = s_blur_2.Sample(smp_rtlinear, I.tc0).rgb;
-	float lua_param_nvg_num_tubes = fmod(shader_param_8.x,1.0f);
+	float lua_param_nvg_num_tubes = frac(shader_param_8.x) * 10.0f;  
 	
 	if (compute_lens_mask(corrected_texturecoords, lua_param_nvg_num_tubes) == 1) // see if we're inside the lens mask
 	{

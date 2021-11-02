@@ -5,18 +5,16 @@ local nvg_washout_thresh = 0.1			-- used to calculate washout effect on light so
 local nvg_view_through_scope = false		-- can you keep your NVGs on when looking through scope?
 
 -- Variables
-local is_nvg_on = false			-- turned on or off?
-local nvg_generation		-- 1, 2, or 3
-local nvg_num_tubes			-- 1, 2, or 4 tubes -- 11 for single offset left and 12 for single offset right
-local nvg_gain_current		-- current gain setting
+local nvg_generation = 0		-- 1, 2, or 3
+local nvg_num_tubes = 0			-- 1, 2, or 4 tubes -- 11 for single offset left and 12 for single offset right
+local nvg_gain_current = 1		-- current gain setting
 local gain_directionality = true -- directionality of brightness adjust
-local gain_speed = 1.1 -- how fast the NVGs brighten/darken
-local vignette_amount		-- standard vignette value
-local vignette_current		-- current vignette value, for turn-on/ turn-off effect
+local vignette_amount = 0.05		-- standard vignette value
+local vignette_current = 1.0		-- current vignette value, for turn-on/ turn-off effect
 local vignette_speed = 1.2 -- how fast vignette changes
-local glitch_power			-- how much 'glitch' to add to NVGs
-local nvg_mode				-- future functionality
-
+local glitch_power = 0			-- how much 'glitch' to add to NVGs
+local nvg_mode = 0			-- future functionality
+local crt_latch = false
 local nv_eff = {}
 
 function get_on_start()
@@ -49,7 +47,11 @@ function pack_nvg_data()
 	return "(" .. x_1 .. "." .. x_2 .. "," .. y_1 .. "." .. y_2 .. "," .. z_1 .. "." .. z_2 .. "," .. w_1 .. "." .. w_2 .. ")"
 end
 
-
+function update_nvgs()
+	get_console():execute("r__nightvision " .. nvg_generation )
+	get_console():execute("shader_param_8 " .. pack_nvg_data() )
+end
+	
 function item_device.set_nightvision(section,state)
 	if (not section) then
 		return
@@ -57,120 +59,125 @@ function item_device.set_nightvision(section,state)
 
 	nv_eff[section] = nv_eff[section] or ini_sys:r_string_ex(section,"nv_effect")
 
-	if nv_eff[section] != nil then
+	if nv_eff[section] ~= nil then
+		printf("set_nightvision")
+		printf(tostring(nv_eff[section]))
+		if (nv_eff[section] == "nightvision_1") then 
+		nvg_generation = 1 
+		nvg_num_tubes = 2 
+		end
+		
+		if (nv_eff[section] == "nightvision_2") then 
+		nvg_generation = 2 
+		nvg_num_tubes = 2 
+		end
+		
+		if (nv_eff[section] == "nightvision_3") then 
+		nvg_generation = 3 
+		nvg_num_tubes = 4
+		end
 
-		local nv_state = item_device.is_nv_active()
-
-		if (nv_eff[section] == "nightvision_1") then nvg_generation = 1 end
-		if (nv_eff[section] == "nightvision_2") then nvg_generation = 2 end
-		if (nv_eff[section] == "nightvision_3") then nvg_generation = 3 end
-
-		if state and (not nv_state) then
-			get_console():execute("r__nightvision " .. nvg_generation )
-			get_console():execute("shader_param_8 " .. pack_nvg_data() )
+		if state and (not item_device.nv_state) then
+			update_nvgs()
 			utils_obj.play_sound("interface\\inv_nv_start")
-			nv_state = true
+			item_device.nv_state = true
 
-		elseif (not state) and nv_state then
+		elseif (not state) and item_device.nv_state then
 			get_console():execute("r__nightvision 0")
 			get_console():execute("shader_param_8 (0,0,0,0)")
+			crt_latch = false
+			vignette_current = 1.0
 			utils_obj.play_sound("interface\\inv_nv_off")
-			nv_state = false
+			item_device.nv_state = false
 		end
 	end
 end
 
 function brightness_adjust()
-	if gain_directionality and nvg_gain_current <= nvg_gain_max then
+	if item_device.nv_state then
+		local step_size = (nvg_gain_max - nvg_gain_min) / 3
+		if gain_directionality and nvg_gain_current <= nvg_gain_max then
+			
+			nvg_gain_current = nvg_gain_current + step_size
 		
-		nvg_gain_current = nvg_gain_current * gain_speed
-	
-		if nvg_gain_current >= nvg_gain_max then
-			nvg_gain_current = nvg_gain_max
-			gain_directionality = not gain_directionality
+			if nvg_gain_current >= nvg_gain_max then
+				nvg_gain_current = nvg_gain_max
+				gain_directionality = not gain_directionality
+			end
+			update_nvgs()
+			
+		elseif not gain_directionality and nvg_gain_current >= nvg_gain_min then
+			
+			nvg_gain_current = nvg_gain_current - step_size
+		
+			if nvg_gain_current <= nvg_gain_min then
+				nvg_gain_current = nvg_gain_min
+				gain_directionality = not gain_directionality
+			end
+			
+			update_nvgs()
 		end
 	end
-	
-	if not gain_directionality and nvg_gain_current >= nvg_gain_min then
-		
-		nvg_gain_current = nvg_gain_current * ( 1 / gain_speed )
-	
-		if nvg_gain_current <= nvg_gain_min then
-			nvg_gain_current = nvg_gain_min
-			gain_directionality = not gain_directionality
-		end
-	end
-	
 end
-	
 
 -- manipulate the vignette on 'turn on' to fade from black to nvg by manipulating vignette
-function turn_on_effect()
-	if not is_nvg_on then
-		vignette_current = 1.0
-		is_nvg_on = true
+
+
+function state_change_effect()
+	if not crt_latch and item_device.nv_state then
+		if item_device.nv_state and vignette_current > vignette_amount then
+			vignette_current = vignette_current * ( 1 / vignette_speed)
+		end
+
+		if vignette_current <= vignette_amount then
+			vignette_current = vignette_amount
+			crt_latch = true
+		end
 	end
-
-	if vignette_current > vignette_amount then
-		vignette_current = vignette_current * ( 1 / vignette_speed)
-	end
-
-	if vignette_current <= vignette_amount then
-		vignette_current = vignette_amount
-	end
-
-	return vignette_current;
-end
-
--- manipulate the vignette on 'turn off' to fade from nvg to black by manipulating vignette
-function turn_off_effect()
-	if is_nvg_on then
-		vignette_current = vignette_amount
-		is_nvg_on = false
-	end
-
-	if vignette_current < 1.0 then
-		vignette_current = vignette_current * vignette_speed
-	end
-
-	if vignette_current >= 1.0 then
-		vignette_current = 1.0
-	end
-
-	return vignette_current;
 end
 
 -- nvg glitch effect during blowouts
 function nvg_blowout_glitch()
-
+	return
 end
 
 -- turn off nvgs when aiming down sights
 function actor_on_weapon_zoom_in()
-	if (not nvg_view_through_scope and is_nvg_on) then
+	if (not nvg_view_through_scope and item_device.nv_state) then
 		return	-- here we'll turn off the nvg effect
 	end
 end
 
 -- turn on nvgs when stop aiming down sights
 function actor_on_weapon_zoom_out()
-	if (not nvg_view_through_scope and is_nvg_on) then
+	if (not nvg_view_through_scope and item_device.nv_state) then
 		return	-- here we'll turn on the nvg effect again
+	end
+end
+
+local updated = 0
+local interval = 30
+
+function actor_on_update()
+    if time_global() < updated then return end
+    updated = time_global() + interval
+	if not crt_latch and item_device.nv_state then
+		state_change_effect()
+		update_nvgs()
 	end
 end
 
 -- long press to turn on/off NVG, short press to change brightness
 function on_key_press()
-
+	return
 end
 
 function on_key_release()
-
+	return
 end
 
-
 function on_game_start()
-	RegisterScriptCallback("on_option_change", on_option_change)
+    RegisterScriptCallback("actor_on_update", actor_on_update)
 	RegisterScriptCallback("actor_on_weapon_zoom_in", actor_on_weapon_zoom_in)
 	RegisterScriptCallback("actor_on_weapon_zoom_out", actor_on_weapon_zoom_out)
 	RegisterScriptCallback("on_option_change", on_option_change)

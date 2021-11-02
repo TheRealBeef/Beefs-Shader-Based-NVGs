@@ -37,11 +37,11 @@
 
 		// SHADER UNPACKING
 		// float lua_param_nvg_generation = floor(shader_param_8.x);             // 1, 2, or 3
-		// float lua_param_nvg_num_tubes = fmod(shader_param_8.x,1.0f);          // 1, 2, 4, 1.1, or 1.2
+		// float lua_param_nvg_num_tubes = frac(shader_param_8.x) * 10.0f;     // 1, 2, 4, 1.1, or 1.2
 		// float lua_param_nvg_gain_current = floor(shader_param_8.y) / 10.0f;   // 0.0 to 3.0
-		// float lua_param_nvg_washout_thresh = fmod(shader_param_8.y,1.0f);     // 0.0 to 0.9
+		// float lua_param_nvg_washout_thresh = frac(shader_param_8.y);     // 0.0 to 0.9
 		// float lua_param_vignette_current = floor(shader_param_8.z) / 100.0f;  // 0.0 to 1.0
-		// float lua_param_glitch_power = fmod(shader_param_8.z,1.0f);           // 0.0 to 0.9
+		// float lua_param_glitch_power = frac(shader_param_8.z);           // 0.0 to 0.9
 		// float lua_param_nvg_mode = floor(shader_param_8.w);                   // 0 or 1
 
 									
@@ -78,11 +78,6 @@
 		#define gen_3_scintillation_constant float (0.9992f) 		// The closer the number is to 1.00000, the less scintillation effect. 0.9995f is a good default value. 0.9990 is stronger.
 		#define gen_3_luma_sharpen_factor float(0.5f)
 		
-	// NVG VIGNETTE AMOUNT
-		#define gen_1_vignette_amount float (0.1f)
-		#define gen_2_vignette_amount float (0.08f)
-		#define gen_3_vignette_amount float	(0.05f)
-		
 // NVG COLOR OPTIONS:
 		#define gen_1_saturation_color float3 (0.7,1,0.6)	// Gen1 NVG color - it defines the max amount of color from 0 to 1 using (Red,Green,Blue)
 		#define gen_2_saturation_color float3 (0.5,1,0.4)	// Gen1 NVG color - it defines the max amount of color from 0 to 1 using (Red,Green,Blue)
@@ -93,35 +88,35 @@
 ///////////////////////////////////////////////////////
 float compute_lens_mask(float2 masktc, float num_tubes)
 {
-	if (num_tubes == 1) // One tube centered
+	if (num_tubes > 0.99f && num_tubes < 1.01f) // One tube centered
 		{
 			return step(distance(masktc,single_tube_centered), tube_radius);
 		}
-	else if (num_tubes == 2) // Two tubes
+	else if (num_tubes > 1.99f && num_tubes < 2.01f) // Two tubes
 		{
 			if ( (step(distance(masktc,dual_tube_offset_1), tube_radius) == 1) || (step(distance(masktc,dual_tube_offset_2), tube_radius) == 1))
 				{
-				return 1;
+				return 1.0f;
 				}
 			else
 				{
-				return 0;
+				return 0.0f;
 				}
 		}
-	else if (num_tubes == 4) // Four Tubes
+	else if (num_tubes > 2.99f && num_tubes < 3.01f) // Four Tubes
 		{
 		if  (((step(distance(masktc,quad_tube_offset_1), tube_radius) == 1) || (step(distance(masktc,quad_tube_offset_2), tube_radius) == 1)) || ((step(distance(masktc,quad_tube_offset_3), tube_radius) == 1) || (step(distance(masktc,quad_tube_offset_4), tube_radius) == 1)))
 				{
-				return 1;
+				return 1.0f;
 				}
 			else
 				{
-				return 0;
+				return 0.0f;
 				}
 		}
 	else
 	{
-		return 0;
+		return 0.0f;
 	}
 }
 
@@ -201,18 +196,18 @@ float calc_vignette (float num_tubes, float2 tc, float vignette_amount)
 	float vignette;
 	float2 corrected_texturecoords = aspect_ratio_correction(tc);
 	
-	if (num_tubes == 1)
+	if (num_tubes > 0.99f && num_tubes < 1.01f)
 	{
 		float gen1_vignette_right = pow(smoothstep(tube_radius,tube_radius-vignette_amount, distance(corrected_texturecoords,single_tube_centered)),3);
 		vignette = 1.0 - (1.0 - gen1_vignette_right); // apply vignette
 	}
-	else if (num_tubes == 2)
+	else if (num_tubes > 1.99f && num_tubes < 2.01f)
 	{
 		float gen2_vignette_1 = pow(smoothstep(tube_radius,tube_radius-vignette_amount, distance(corrected_texturecoords,dual_tube_offset_1)),3);
 		float gen2_vignette_2 = pow(smoothstep(tube_radius,tube_radius-vignette_amount, distance(corrected_texturecoords,dual_tube_offset_2)),3);
 		vignette = 1.0 - ((1.0 - gen2_vignette_1) * (1.0 - gen2_vignette_2)); // apply vignette
 	}
-	else if (num_tubes == 4)
+	else if (num_tubes > 3.99f && num_tubes < 4.01f)
 	{
 		float gen3_vignette_1 = pow(smoothstep(tube_radius,tube_radius-vignette_amount, distance(corrected_texturecoords,quad_tube_offset_1)),3);
 		float gen3_vignette_2 = pow(smoothstep(tube_radius,tube_radius-vignette_amount, distance(corrected_texturecoords,quad_tube_offset_2)),3);
