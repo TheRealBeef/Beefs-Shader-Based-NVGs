@@ -43,7 +43,11 @@
 		// float lua_param_vignette_current = floor(shader_param_8.z) / 100.0f;  // 0.0 to 1.0
 		// float lua_param_glitch_power = frac(shader_param_8.z);           // 0.0 to 0.9
 		// float lua_param_nvg_gain_offset = floor(shader_param_8.w) / 10.0f;	// 0.5 to 3.0
-		// float lua_param_nvg_mode = frac(shader_param_8.w);                   // 0 or 1
+		// float lua_param_nvg_mode = frac(shader_param_8.w) * 10;                   // 0 to 9 in 1.0 increment 
+			// mode 0: blurred background (default)
+			// mode 1: black background
+			// mode 2: image overlay
+			// mode 3: no changes (clear vision)
 
 									
 	// Constants
@@ -55,8 +59,12 @@
 	
 		#define tube_radius float (0.5f)
 		#define single_tube_centered float2(0.5f,0.5f)		// Single tube screen position (0.5, 0.5 is centered)
+		#define single_tube_offset_left float2(0.25f,0.5f)		// Single tube screen position (0.5, 0.5 is centered)
+		#define single_tube_offset_right float2(0.75f,0.5f)		// Single tube screen position (0.5, 0.5 is centered)
+		
 		#define dual_tube_offset_1 float2(0.25f,0.5f)		// Offset for dual tube left eye
 		#define dual_tube_offset_2 float2(0.75f,0.5f)		// Offset for dual tube right eye
+		
 		#define quad_tube_offset_1 float2(0.05f,0.5f)		// Offset for quad tube left outer tube
 		#define quad_tube_offset_2 float2(0.3f,0.5f)		// Offset for quad tube left inner tube
 		#define quad_tube_offset_3 float2(0.7f,0.5f)		// Offset for quad tube right inner tube
@@ -92,6 +100,14 @@ float compute_lens_mask(float2 masktc, float num_tubes)
 	if (num_tubes > 0.99f && num_tubes < 1.01f) // One tube centered
 		{
 			return step(distance(masktc,single_tube_centered), tube_radius);
+		}
+	else if (num_tubes > 1.09f && num_tubes < 1.11f) // One tube left offset
+		{
+			return step(distance(masktc,single_tube_offset_left), tube_radius);
+		}
+	else if (num_tubes > 1.19f && num_tubes < 1.21f) // One tube right offset
+		{
+			return step(distance(masktc,single_tube_offset_right), tube_radius);
 		}
 	else if (num_tubes > 1.99f && num_tubes < 2.01f) // Two tubes
 		{
@@ -199,8 +215,19 @@ float calc_vignette (float num_tubes, float2 tc, float vignette_amount)
 	
 	if (num_tubes > 0.99f && num_tubes < 1.01f)
 	{
-		float gen1_vignette_right = pow(smoothstep(tube_radius,tube_radius-vignette_amount, distance(corrected_texturecoords,single_tube_centered)),3);
-		vignette = 1.0 - (1.0 - gen1_vignette_right); // apply vignette
+		float gen1_vignette = pow(smoothstep(tube_radius,tube_radius-vignette_amount, distance(corrected_texturecoords,single_tube_centered)),3);
+		vignette = 1.0 - (1.0 - gen1_vignette); // apply vignette
+	}
+	else if (num_tubes > 1.09f && num_tubes < 1.11f)
+	{
+		float gen1_vignette = pow(smoothstep(tube_radius,tube_radius-vignette_amount, distance(corrected_texturecoords,single_tube_offset_left)),3);
+		vignette = 1.0 - (1.0 - gen1_vignette); // apply vignette
+	}
+	
+	else if (num_tubes > 1.19f && num_tubes < 1.21f)
+	{
+		float gen1_vignette = pow(smoothstep(tube_radius,tube_radius-vignette_amount, distance(corrected_texturecoords,single_tube_offset_right)),3);
+		vignette = 1.0 - (1.0 - gen1_vignette); // apply vignette
 	}
 	else if (num_tubes > 1.99f && num_tubes < 2.01f)
 	{
@@ -298,7 +325,7 @@ float blurred_depth (float2 tc)
     
     float Directions = 12.0; // BLUR DIRECTIONS (Default 16.0 - More is better but slower)
     float Quality = 4.0; // BLUR QUALITY (Default 4.0 - More is better but slower)
-	float Size = 4;
+	float Size = 6;
 	float2 Radius = Size/screen_res.xy;
 
 	// how far away is the center of our COC

@@ -6,55 +6,51 @@
 <string_table>
 
 	<string id="ui_mcm_beef_nvg_title">
-		<text>Beef's NVG Settings</text>
+		<text>Настройки Beef's NVG </text>
 	</string>	
 	<string id="ui_mcm_menu_beef_nvg">
 		<text>Beef's NVG</text>
 	</string>
 
-
 	<string id="ui_mcm_beef_nvg_nvg_gain_max_mcm">
-		<text>The max gain that can be applied to NVGs.</text>
+		<text>Максимальное усиление, которое можно применить к ПНВ.</text>
 	</string>
 	<string id="ui_mcm_beef_nvg_nvg_gain_max_mcm_desc">
-		<text>Higher values allow you more 'brightness', although it will eventually cap out. Recommend to set this based cloudy_dark_2 weather at midnight.</text>
+		<text>Более высокие значения позволяют увеличить «яркость», хотя в конечном итоге она уменьшится. Рекомендуем настраивать её под погоду cloudy_dark_2 в полночь.</text>
 	</string>
 	
 	<string id="ui_mcm_beef_nvg_nvg_gain_min_mcm">
-		<text>The min gain that can be applied to NVGs.</text>
+		<text>Минимальное усиление, которое можно применить к ПНВ.</text>
 	</string>
 	
 	<string id="ui_mcm_beef_nvg_nvg_gain_min_mcm_desc">
-		<text>Lower values allow you to turn down the NVGs more - very low values will even enable you to use the NVGs during daylight.</text>
+		<text>Более низкие значения позволяют вам больше затемнить ПНВ - очень низкие значения позволят вам даже использовать ПНВ при дневном свете.</text>
 	</string>
 	
 	<string id="ui_mcm_beef_nvg_nvg_gain_offset_mcm">
-		<text>An offset applied to world brightness.</text>
+		<text>Смещение применяемое к мировой яркости.</text>
 	</string>
 	
 	<string id="ui_mcm_beef_nvg_nvg_gain_offset_mcm_desc">
-		<text>1.0 leaves world brightness as-is, larger values multiply world brightness (but not light sources).</text>
+		<text>Значение 1.0 оставляет стандартную яркость, большие значения умножают яркость (кроме источников света)..</text>
 	</string>
 
-
 	<string id="ui_mcm_beef_nvg_nvg_washout_thresh_mcm">
-		<text>The threshold for light source washout.</text>
+		<text>Порог размытия источников света.</text>
 	</string>
 	
 	<string id="ui_mcm_beef_nvg_nvg_washout_thresh_mcm_desc">
-		<text>Generally recommended to keep at 0.1, but can be increased to reduce washout on light sources slightly. 
-		This value scales with the nvg gain so that higher gains have more washout and lower gains have less washout.</text>
+		<text>Обычно рекомендуется оставить 0,1, но можно увеличить для уменьшения размытия источников света. Это значение масштабируется с коэффициентом усиления ПНВ, более высокие коэффициенты усиления дают большее размытие, а более низкие коэффициенты - меньшее.</text>
 	</string>
 	
-	
 	<string id="ui_mcm_beef_nvg_nvg_view_through_scope_mcm">
-		<text>Can use NVG while Aiming Down Sights? (not implemented yet).</text>
+		<text>Использование ПНВ при прицеливании (недоступно в данной версии)</text>
 	</string>
 	
 	<string id="ui_mcm_beef_nvg_nvg_view_through_scope_mcm_desc">
-		<text>If this box is checked, you can keep your NVGs on while ADS. If its is unchecked, your character will disable their NVGs while raising their weapon.</text>
+		<text>Если включено, Вы можете использовать ПНВ во время прицеливания. Если выключено - персонаж выключит ПНВ в прицеливании. </text>
 	</string>
-	
+
 	
 	<string id="ui_mcm_beef_nvg_nvg_gen1_tubes_mcm">
 		<text>Gen 1 Tube Setup: (Default single tube centered)</text>
@@ -143,6 +139,5 @@
 	<string id="ui_mcm_lst_clear_vision">
 		<text>No Overlay (clear vision)</text>
 	</string>
-	
 	
 </string_table>

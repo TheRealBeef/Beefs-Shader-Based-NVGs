@@ -1,9 +1,14 @@
 -- Beef NVG MCM values
-local nvg_gain_max = 2.0		-- max value for nvg gain (brightness)
-local nvg_gain_min = 0.5		-- min value for nvg gain (brightness)
+local nvg_gain_max = 2.0				-- max value for nvg gain (brightness)
+local nvg_gain_min = 0.5				-- min value for nvg gain (brightness)
 local nvg_washout_thresh = 0.1			-- used to calculate washout effect on light sources
-local nvg_view_through_scope = false		-- can you keep your NVGs on when looking through scope?
-local nvg_gain_offset = 1.0		-- offset for nvg gain to accomodate for brighter/darker worlds
+local nvg_view_through_scope = false	-- can you keep your NVGs on when looking through scope?
+local nvg_gain_offset = 1.0				-- offset for nvg gain to accomodate for brighter/darker worlds
+local nvg_mode_gen1 = 3.0					-- overlay mode gen 1
+local nvg_num_tubes_gen2 = 2.0 			-- number of tubes for NVG gen 2
+local nvg_mode_gen1 = 0.0					-- overlay mode gen 2
+local nvg_num_tubes_gen3 = 4.0 			-- number of tubes for NVG gen 3
+local nvg_mode_gen1 = 0.0					-- overlay mode gen 3
 
 -- Variables
 local nvg_generation = 0		-- 1, 2, or 3
@@ -14,7 +19,7 @@ local vignette_amount = 0.05		-- standard vignette value
 local vignette_current = 1.0		-- current vignette value, for turn-on/ turn-off effect
 local vignette_speed = 2 -- how fast vignette changes
 local glitch_power = 0			-- how much 'glitch' to add to NVGs
-local nvg_mode = 0			-- future functionality
+local nvg_mode = 0			-- overlay preset
 local crt_latch = false
 local nv_eff = {}
 
@@ -24,12 +29,18 @@ function on_option_change()
 		nvg_gain_offset = z_beefs_nvgs_mcm.get_config("nvg_gain_offset_mcm")
 		nvg_washout_thresh = z_beefs_nvgs_mcm.get_config("nvg_washout_thresh_mcm")
 		nvg_view_through_scope = z_beefs_nvgs_mcm.get_config("nvg_view_through_scope_mcm")
+		nvg_num_tubes_gen1 = z_beefs_nvgs_mcm.get_config("nvg_gen1_tubes_mcm")
+		nvg_num_tubes_gen2 = z_beefs_nvgs_mcm.get_config("nvg_gen2_tubes_mcm")
+		nvg_num_tubes_gen3 = z_beefs_nvgs_mcm.get_config("nvg_gen3_tubes_mcm")
+		nvg_mode_gen1 = z_beefs_nvgs_mcm.get_config("nvg_gen1_mode_mcm")
+		nvg_mode_gen2 = z_beefs_nvgs_mcm.get_config("nvg_gen2_mode_mcm")
+		nvg_mode_gen3 = z_beefs_nvgs_mcm.get_config("nvg_gen3_mode_mcm")
 end
 
 function pack_nvg_data()
 
 	local x_1 = tostring(nvg_generation)                           -- Generation (1,2,3) - outputs 1.x to 3.x
-	local x_2 = tostring(nvg_num_tubes)                            -- Num Tubes (1,2,4,11,12) outputs x.1, x.2, x.4, x.11, or x.12
+	local x_2 = tostring(nvg_num_tubes * 10)                            -- Num Tubes (1,2,4,1.1,1.2) outputs x.10, x.20, x.40, x.11, or x.12
 	local y_1 = tostring(math.floor(nvg_gain_current * 10))        -- Gain Adjust (0.1 to 3) -- outputs 1.y to 30.y in 1. increment
 	local y_2 = tostring(math.floor(nvg_washout_thresh * 10))      -- Washout Thresh (0.0 - 0.9) - outputs y.0 to y.9 in .1 increment
 	local z_1 = tostring(math.floor(vignette_current * 100))       -- Vignette Amount (0.0 to 1.0) outputs 0.z to 100.z in 1. increment
@@ -57,17 +68,20 @@ function item_device.set_nightvision(section,state)
 		printf(tostring(nv_eff[section]))
 		if (nv_eff[section] == "nightvision_1") then 
 		nvg_generation = 1 
-		nvg_num_tubes = 2 
+		nvg_num_tubes = nvg_num_tubes_gen1
+		nvg_mode = nvg_mode_gen1
 		end
 		
 		if (nv_eff[section] == "nightvision_2") then 
 		nvg_generation = 2 
-		nvg_num_tubes = 2 
+		nvg_num_tubes = nvg_num_tubes_gen2
+		nvg_mode = nvg_mode_gen2
 		end
 		
 		if (nv_eff[section] == "nightvision_3") then 
 		nvg_generation = 3 
-		nvg_num_tubes = 4
+		nvg_num_tubes = nvg_num_tubes_gen3
+		nvg_mode = nvg_mode_gen3
 		end
 
 		if state and (not item_device.nv_state) then

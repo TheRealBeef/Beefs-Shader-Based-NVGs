@@ -134,9 +134,26 @@ float4 main(p_screen I) : SV_Target
 	///////////////////////////////////////////////////////
 	else
 	{	
-		image = half_res_blur;
-		image = clamp(image,0.0,1.0);
-
+		float lua_param_nvg_mode = frac(shader_param_8.w) * 10;
+		
+		if (abs(lua_param_nvg_mode-0.0) <= 0.01) // mode 0 - blur
+		{
+			image = half_res_blur;
+			image = clamp(image,0.0,1.0);
+		}
+		else if (abs(lua_param_nvg_mode-1.0) <= 0.01) // mode 1 - black
+		{
+			image = float3(0.0,0.0,0.0);
+		}
+		else if (abs(lua_param_nvg_mode-2.0) <= 0.01) // mode 2 - image overlay
+		{
+			image = clamp(image,0.0,1.0);
+		}
+		else if (abs(lua_param_nvg_mode-3.0) <= 0.01) // mode 3 - no changes (clear vision)
+		{
+			image = clamp(image,0.0,1.0);
+		}
+		
 		// RETURN THE RESULTING IMAGE
 		return float4(image, 1.0);
 	}
