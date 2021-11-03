@@ -1,0 +1,175 @@
+-- Beef NVG MCM values
+local nvg_gain_max = 2.0		-- max value for nvg gain (brightness)
+local nvg_gain_min = 0.5		-- min value for nvg gain (brightness)
+local nvg_washout_thresh = 0.1			-- used to calculate washout effect on light sources
+local nvg_view_through_scope = false		-- can you keep your NVGs on when looking through scope?
+local nvg_gain_offset = 1.0		-- offset for nvg gain to accomodate for brighter/darker worlds
+
+-- Variables
+local nvg_generation = 0		-- 1, 2, or 3
+local nvg_num_tubes = 0			-- 1, 2, or 4 tubes -- 11 for single offset left and 12 for single offset right
+local nvg_gain_current = 1		-- current gain setting
+local gain_directionality = true -- directionality of brightness adjust
+local vignette_amount = 0.05		-- standard vignette value
+local vignette_current = 1.0		-- current vignette value, for turn-on/ turn-off effect
+local vignette_speed = 2 -- how fast vignette changes
+local glitch_power = 0			-- how much 'glitch' to add to NVGs
+local nvg_mode = 0			-- future functionality
+local crt_latch = false
+local nv_eff = {}
+
+function on_option_change()
+		nvg_gain_max = z_beefs_nvgs_mcm.get_config("nvg_gain_max_mcm")
+		nvg_gain_min = z_beefs_nvgs_mcm.get_config("nvg_gain_min_mcm")
+		nvg_gain_offset = z_beefs_nvgs_mcm.get_config("nvg_gain_offset_mcm")
+		nvg_washout_thresh = z_beefs_nvgs_mcm.get_config("nvg_washout_thresh_mcm")
+		nvg_view_through_scope = z_beefs_nvgs_mcm.get_config("nvg_view_through_scope_mcm")
+end
+
+function pack_nvg_data()
+
+	local x_1 = tostring(nvg_generation)                           -- Generation (1,2,3) - outputs 1.x to 3.x
+	local x_2 = tostring(nvg_num_tubes)                            -- Num Tubes (1,2,4,11,12) outputs x.1, x.2, x.4, x.11, or x.12
+	local y_1 = tostring(math.floor(nvg_gain_current * 10))        -- Gain Adjust (0.1 to 3) -- outputs 1.y to 30.y in 1. increment
+	local y_2 = tostring(math.floor(nvg_washout_thresh * 10))      -- Washout Thresh (0.0 - 0.9) - outputs y.0 to y.9 in .1 increment
+	local z_1 = tostring(math.floor(vignette_current * 100))       -- Vignette Amount (0.0 to 1.0) outputs 0.z to 100.z in 1. increment
+	local z_2 = tostring(math.floor(glitch_power * 10))            -- Glitch Power (0.0 - 0.9) - outputs z.0 to z.9 in .1 increment
+	local w_1 = tostring((math.floor(nvg_gain_offset * 10)) )      -- Gain Offset (0.5 to 3.0) - outputs 5.w to 30.w in 1. increment
+	local w_2 = tostring(nvg_mode)                  		       -- Mode (0,1) - outputs w.0 or w.1 depending on mode
+
+	return "(" .. x_1 .. "." .. x_2 .. "," .. y_1 .. "." .. y_2 .. "," .. z_1 .. "." .. z_2 .. "," .. w_1 .. "." .. w_2 .. ")"
+end
+
+function update_nvgs()
+	get_console():execute("r__nightvision " .. nvg_generation )
+	get_console():execute("shader_param_8 " .. pack_nvg_data() )
+end
+	
+function item_device.set_nightvision(section,state)
+	if (not section) then
+		return
+	end
+
+	nv_eff[section] = nv_eff[section] or ini_sys:r_string_ex(section,"nv_effect")
+
+	if nv_eff[section] ~= nil then
+		printf("set_nightvision")
+		printf(tostring(nv_eff[section]))
+		if (nv_eff[section] == "nightvision_1") then 
+		nvg_generation = 1 
+		nvg_num_tubes = 2 
+		end
+		
+		if (nv_eff[section] == "nightvision_2") then 
+		nvg_generation = 2 
+		nvg_num_tubes = 2 
+		end
+		
+		if (nv_eff[section] == "nightvision_3") then 
+		nvg_generation = 3 
+		nvg_num_tubes = 4
+		end
+
+		if state and (not item_device.nv_state) then
+			update_nvgs()
+			utils_obj.play_sound("interface\\inv_nv_start")
+			item_device.nv_state = true
+
+		elseif (not state) and item_device.nv_state then
+			get_console():execute("r__nightvision 0")
+			get_console():execute("shader_param_8 (0,0,0,0)")
+			crt_latch = false
+			vignette_current = 1.0
+			utils_obj.play_sound("interface\\inv_nv_off")
+			item_device.nv_state = false
+		end
+	end
+end
+
+function brightness_adjust()
+	if item_device.nv_state then
+		local step_size = (nvg_gain_max - nvg_gain_min) / 3
+		if gain_directionality and nvg_gain_current <= nvg_gain_max then
+			
+			nvg_gain_current = nvg_gain_current + step_size
+		
+			if nvg_gain_current >= nvg_gain_max then
+				nvg_gain_current = nvg_gain_max
+				gain_directionality = not gain_directionality
+			end
+			
+		elseif not gain_directionality and nvg_gain_current >= nvg_gain_min then
+			
+			nvg_gain_current = nvg_gain_current - step_size
+		
+			if nvg_gain_current <= nvg_gain_min then
+				nvg_gain_current = nvg_gain_min
+				gain_directionality = not gain_directionality
+			end
+			
+			
+		end
+		update_nvgs()
+	end
+end
+
+-- manipulate the vignette on 'turn on' to fade from black to nvg by manipulating vignette
+
+
+function state_change_effect()
+	if not crt_latch and item_device.nv_state then
+		if item_device.nv_state and vignette_current > vignette_amount then
+			vignette_current = vignette_current * ( 1 / vignette_speed)
+		end
+
+		if vignette_current <= vignette_amount then
+			vignette_current = vignette_amount
+			crt_latch = true
+		end
+	end
+end
+
+-- nvg glitch effect during blowouts
+function nvg_blowout_glitch()
+	return
+end
+
+-- turn off nvgs when aiming down sights
+function actor_on_weapon_zoom_in()
+	if (not nvg_view_through_scope and item_device.nv_state) then
+		return	-- here we'll turn off the nvg effect
+	end
+end
+
+-- turn on nvgs when stop aiming down sights
+function actor_on_weapon_zoom_out()
+	if (not nvg_view_through_scope and item_device.nv_state) then
+		return	-- here we'll turn on the nvg effect again
+	end
+end
+
+function actor_on_update()
+	if not crt_latch and item_device.nv_state then
+		state_change_effect()
+		update_nvgs()
+	end
+end
+
+-- long press to turn on/off NVG, short press to change brightness
+function on_key_press()
+	return
+end
+
+function on_key_release()
+	return
+end
+
+function on_game_start()
+    RegisterScriptCallback("actor_on_update", actor_on_update)
+	RegisterScriptCallback("actor_on_weapon_zoom_in", actor_on_weapon_zoom_in)
+	RegisterScriptCallback("actor_on_weapon_zoom_out", actor_on_weapon_zoom_out)
+	RegisterScriptCallback("on_option_change", on_option_change)
+	RegisterScriptCallback("on_key_press", on_key_press)
+	RegisterScriptCallback("on_key_release", on_key_release)
+	on_option_change()
+end
