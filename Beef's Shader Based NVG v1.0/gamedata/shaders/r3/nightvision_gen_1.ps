@@ -85,11 +85,10 @@ float4 main(p_screen I) : SV_Target
 		
 			// GLITCH EFFECT -- TO DO
 			float lua_param_glitch_power = fmod(shader_param_8.z,1.0f); 
-			
-			if (lua_param_glitch_power > 0.0f)
-			{
-			image = lerp(image, glitchEffect(image, I.tc0, lua_param_glitch_power),0.5);
-			}
+				if (lua_param_glitch_power > 0.0f)
+				{
+				image = lerp(image, glitchEffect(image, I.tc0, lua_param_glitch_power),0.9);
+				}
 
 			// APPLY BLOOM / WASHOUT
 			float addon = bokeh_pass_3( (eighth_res_bloom.g + quarter_res_bloom.g),I.tc0);
@@ -98,6 +97,7 @@ float4 main(p_screen I) : SV_Target
 //			addon = max(addon - 0.01,0) * 3;
 			image = image + (float3)addon_soft + (float3)addon_hard;
 	//		image *= 3;
+
 
 
 			// APPLY CRT EFFECT

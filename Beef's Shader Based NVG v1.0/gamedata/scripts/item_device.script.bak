@@ -705,8 +705,6 @@ function device_binder:__init(obj) super(obj)
 	self.first_update = nil
 end
 
-local nv_glitch_state = false
-
 function device_binder:update(delta)
     object_binder.update(self, delta)
 	
@@ -782,23 +780,17 @@ function device_binder:update(delta)
 						local surge_time = GetEvent("surge", "time") or 0
 						local val_glitch = (surge_time > 168) and normalize(surge_time, 220, 168) or normalize(surge_time, 20, 168)
 						z_beefs_nvgs.nvg_glitch( clamp(val_glitch,0.0,0.9) )
-						nv_glitch_state = true
 		
 					-- Psi-storms: huge spike when a vortex hits the ground
 					elseif GetEvent("psi_storm", "state") then
 						if GetEvent("psi_storm", "vortex") then
 							z_beefs_nvgs.nvg_glitch(0.9)
-							nv_glitch_state = true
 						else
 							z_beefs_nvgs.nvg_glitch(0.2)
-							nv_glitch_state = true
 						end
 					-- NVG doesn't get affected in normal cases	
 					else
-						if nv_glitch_state then
 						z_beefs_nvgs.nvg_glitch(0.0)
-							nv_glitch_state = false
-						end
 					end
 				end
 				
@@ -850,7 +842,6 @@ function device_binder:process_power(id, section, condition)
 		-- Device active in inventory
 		elseif num == 3 and dev_inv[id] and (not in_hand) then
 			power_loss = power_loss + consumption
-
 		end
 	end
 	
@@ -935,8 +926,6 @@ function device_binder:process_glitch(id, section, condition)
 	else
 		self.object:set_psy_factor(0)
 	end
-	
-	
 end
 
 function device_binder:process_flicker(force)

@@ -82,14 +82,14 @@ float4 main(p_screen I) : SV_Target
 					image.r *= (light_att+0.1f); //Apply light attenuation (plus offset to prevent sky turning black)
 				} 
 			}
-		
+			
 			// GLITCH EFFECT -- TO DO
 			float lua_param_glitch_power = fmod(shader_param_8.z,1.0f); 
 				if (lua_param_glitch_power > 0.0f)
 				{
-				image = lerp(image, glitchEffect(image, I.tc0, lua_param_glitch_power),0.5);
+				image = lerp(image, glitchEffect(image, I.tc0, lua_param_glitch_power),0.9);
 				}
-
+				
 			// APPLY BLOOM / WASHOUT
 			float addon = bokeh_pass_3( (eighth_res_bloom.g + quarter_res_bloom.g),I.tc0);
 			float addon_hard = max(addon - 0.7,0.0) * 2.0f;
@@ -97,8 +97,7 @@ float4 main(p_screen I) : SV_Target
 //			addon = max(addon - 0.01,0) * 3;
 			image = image + (float3)addon_soft + (float3)addon_hard;
 	//		image *= 3;
-
-
+				
 			// APPLY CRT EFFECT
 			image = lerp(image,make_crt_ified(half_res_blur, I.tc0),gen_2_crt_effect_factor); // Adds a CRT effect that I think looks better than draw_scanlines
 

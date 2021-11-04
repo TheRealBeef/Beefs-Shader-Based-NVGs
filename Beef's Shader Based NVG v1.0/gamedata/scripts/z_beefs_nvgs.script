@@ -9,6 +9,7 @@ local nvg_num_tubes_gen2 = 2.0 			-- number of tubes for NVG gen 2
 local nvg_mode_gen1 = 0.0					-- overlay mode gen 2
 local nvg_num_tubes_gen3 = 4.0 			-- number of tubes for NVG gen 3
 local nvg_mode_gen1 = 0.0					-- overlay mode gen 3
+local nvg_stays_pda = true				-- disable nvg on PDA?
 
 -- Variables
 local nvg_generation = 0		-- 1, 2, or 3
@@ -35,6 +36,7 @@ function on_option_change()
 		nvg_mode_gen1 = z_beefs_nvgs_mcm.get_config("nvg_gen1_mode_mcm")
 		nvg_mode_gen2 = z_beefs_nvgs_mcm.get_config("nvg_gen2_mode_mcm")
 		nvg_mode_gen3 = z_beefs_nvgs_mcm.get_config("nvg_gen3_mode_mcm")
+		nvg_stays_pda = z_beefs_nvgs_mcm.get_config("nvg_stays_pda_mcm")
 end
 
 function pack_nvg_data()
@@ -55,7 +57,7 @@ function update_nvgs()
 	get_console():execute("r__nightvision " .. nvg_generation )
 	get_console():execute("shader_param_8 " .. pack_nvg_data() )
 end
-	
+
 function item_device.set_nightvision(section,state)
 	if (not section) then
 		return
@@ -104,14 +106,14 @@ function brightness_adjust()
 	if item_device.nv_state then
 		local step_size = (nvg_gain_max - nvg_gain_min) / 3
 		if gain_directionality and nvg_gain_current <= nvg_gain_max then
-			
+
 			nvg_gain_current = nvg_gain_current + step_size
-		
+
 			if nvg_gain_current >= nvg_gain_max then
 				nvg_gain_current = nvg_gain_max
 				gain_directionality = not gain_directionality
 			end
-			
+
 		elseif not gain_directionality and nvg_gain_current >= nvg_gain_min then
 			
 			nvg_gain_current = nvg_gain_current - step_size
@@ -120,8 +122,7 @@ function brightness_adjust()
 				nvg_gain_current = nvg_gain_min
 				gain_directionality = not gain_directionality
 			end
-			
-			
+
 		end
 		update_nvgs()
 	end
@@ -143,22 +144,47 @@ function state_change_effect()
 	end
 end
 
--- nvg glitch effect during blowouts
-function nvg_blowout_glitch()
-	return
+-- nvg glitch effect during blowouts and psy storms
+function nvg_glitch(power)
+	if item_device.nv_state then
+		if glitch_power ~= power then
+			glitch_power = power
+			if not zoomed_in then
+				update_nvgs()
+			end
+		end
+	end
 end
+
+local zoomed_in = false
 
 -- turn off nvgs when aiming down sights
 function actor_on_weapon_zoom_in()
 	if (not nvg_view_through_scope and item_device.nv_state) then
-		return	-- here we'll turn off the nvg effect
+			zoomed_in = true
+			get_console():execute("r__nightvision 0")
+			get_console():execute("shader_param_8 (0,0,0,0)")
 	end
 end
 
 -- turn on nvgs when stop aiming down sights
 function actor_on_weapon_zoom_out()
 	if (not nvg_view_through_scope and item_device.nv_state) then
-		return	-- here we'll turn on the nvg effect again
+		zoomed_in = false
+		update_nvgs()
+	end
+end
+
+local disable_nvg = false
+
+function pda_check()
+	if not item_device.is_pda_active() and (not nvg_stays_pda) then
+		get_console():execute("r__nightvision 0")
+		get_console():execute("shader_param_8 (0,0,0,0)")
+		disable_nvg = true
+	elseif item_device.is_pda_active() and disable_nvg then
+		update_nvgs()
+		disable_nvg = false
 	end
 end
 
@@ -185,5 +211,6 @@ function on_game_start()
 	RegisterScriptCallback("on_option_change", on_option_change)
 	RegisterScriptCallback("on_key_press", on_key_press)
 	RegisterScriptCallback("on_key_release", on_key_release)
+	RegisterScriptCallback("actor_on_info_callback",pda_check)
 	on_option_change()
 end

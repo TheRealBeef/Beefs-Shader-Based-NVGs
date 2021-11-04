@@ -52,6 +52,14 @@
 	</string>
 
 	
+	<string id="ui_mcm_beef_nvg_nvg_stays_pda_mcm">
+		<text>NVGs stay on when viewing PDA:</text>
+	</string>
+	
+	<string id="ui_mcm_beef_nvg_nvg_stays_pda_mcm_desc">
+		<text>If this box is unchecked, your NVGs automatically disable when looking at your PDA.</text>
+	</string>
+	
 	<string id="ui_mcm_beef_nvg_nvg_gen1_tubes_mcm">
 		<text>Gen 1 Tube Setup: (Default single tube centered)</text>
 	</string>
