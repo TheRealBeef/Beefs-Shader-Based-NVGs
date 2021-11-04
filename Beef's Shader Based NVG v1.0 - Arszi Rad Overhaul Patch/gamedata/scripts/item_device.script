@@ -713,6 +713,8 @@ function device_binder:__init(obj) super(obj)
 	self.first_update = nil
 end
 
+local nv_glitch_state = false
+
 function device_binder:update(delta)
     object_binder.update(self, delta)
 	
@@ -781,6 +783,32 @@ function device_binder:update(delta)
 			
 			-- No need to process unequipped devices
 			if dev_slot[id] then
+				
+				if (self.N_V) then
+					-- Emissions: the closer the wave, the higher the psi influnces
+					if GetEvent("surge", "state") then
+						local surge_time = GetEvent("surge", "time") or 0
+						local val_glitch = (surge_time > 168) and normalize(surge_time, 220, 168) or normalize(surge_time, 20, 168)
+						z_beefs_nvgs.nvg_glitch( clamp(val_glitch,0.0,0.9) )
+						nv_glitch_state = true
+		
+					-- Psi-storms: huge spike when a vortex hits the ground
+					elseif GetEvent("psi_storm", "state") then
+						if GetEvent("psi_storm", "vortex") then
+							z_beefs_nvgs.nvg_glitch(0.9)
+							nv_glitch_state = true
+						else
+							z_beefs_nvgs.nvg_glitch(0.2)
+							nv_glitch_state = true
+						end
+					-- NVG doesn't get affected in normal cases	
+					else
+						if nv_glitch_state then
+							z_beefs_nvgs.nvg_glitch(0.0)
+							nv_glitch_state = false
+						end
+					end
+				end
 				
 				-- Light flicker on event for flashlights
 				if (self.type == "FLASH") then
