@@ -177,14 +177,21 @@ end
 
 local disable_nvg = false
 
-function pda_check()
-	if not item_device.is_pda_active() and (not nvg_stays_pda) then
-		get_console():execute("r__nightvision 0")
-		get_console():execute("shader_param_8 (0,0,0,0)")
-		disable_nvg = true
-	elseif item_device.is_pda_active() and disable_nvg then
-		update_nvgs()
-		disable_nvg = false
+function pda_check(npc,info_id)
+	local actor = db.actor
+	if actor and item_device.nv_state then
+		if info_id == "ui_pda" and not nvg_stays_pda then
+			if not disable_nvg then
+				get_console():execute("r__nightvision 0")
+				get_console():execute("shader_param_8 (0,0,0,0)")
+				disable_nvg = true
+			end
+		elseif info_id == "ui_pda_hide" and not nvg_stays_pda then
+			if disable_nvg then
+				update_nvgs()
+				disable_nvg = false
+			end
+		end
 	end
 end
 
