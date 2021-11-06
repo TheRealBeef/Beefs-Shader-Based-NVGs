@@ -6,146 +6,150 @@
 <string_table>
 
 	<string id="ui_mcm_beef_nvg_title">
-		<text>Настройки Beef's NVG </text>
+		<text>Beef's NVG Настройки</text>
 	</string>	
 	<string id="ui_mcm_menu_beef_nvg">
 		<text>Beef's NVG</text>
 	</string>
 
+
 	<string id="ui_mcm_beef_nvg_nvg_gain_max_mcm">
-		<text>Максимальное усиление, которое можно применить к ПНВ.</text>
+		<text>Максимальное усиление ПНВ.</text>
 	</string>
 	<string id="ui_mcm_beef_nvg_nvg_gain_max_mcm_desc">
-		<text>Более высокие значения позволяют увеличить «яркость», хотя в конечном итоге она уменьшится. Рекомендуем настраивать её под погоду cloudy_dark_2 в полночь.</text>
+		<text>Более высокие значения позволяют увеличить "яркость", но с определенным лимитом. Рекомендуется устанавливать эту настройку на основе пресета погоды cloudy_dark_2 в полночь.</text>
 	</string>
 	
 	<string id="ui_mcm_beef_nvg_nvg_gain_min_mcm">
-		<text>Минимальное усиление, которое можно применить к ПНВ.</text>
+		<text>Минимальное усиление ПНВ.</text>
 	</string>
 	
 	<string id="ui_mcm_beef_nvg_nvg_gain_min_mcm_desc">
-		<text>Более низкие значения позволяют вам больше затемнить ПНВ - очень низкие значения позволят вам даже использовать ПНВ при дневном свете.</text>
+		<text>Более низкие значения позволяют ещё больше ослаблять ПНВ - очень низкие значения даже позволят использовать его днём.</text>
 	</string>
 	
 	<string id="ui_mcm_beef_nvg_nvg_gain_offset_mcm">
-		<text>Смещение применяемое к мировой яркости.</text>
+		<text>Смещение, применяемое к яркости мира.</text>
 	</string>
 	
 	<string id="ui_mcm_beef_nvg_nvg_gain_offset_mcm_desc">
-		<text>Значение 1.0 оставляет стандартную яркость, большие значения умножают яркость (кроме источников света)..</text>
+		<text>1.0 оставляет яркость мира как есть, большие значения умножают яркость мира (но не источники света).</text>
 	</string>
 
+
 	<string id="ui_mcm_beef_nvg_nvg_washout_thresh_mcm">
-		<text>Порог размытия источников света.</text>
+		<text>Порог для размывания источника света.</text>
 	</string>
 	
 	<string id="ui_mcm_beef_nvg_nvg_washout_thresh_mcm_desc">
-		<text>Обычно рекомендуется оставить 0,1, но можно увеличить для уменьшения размытия источников света. Это значение масштабируется с коэффициентом усиления ПНВ, более высокие коэффициенты усиления дают большее размытие, а более низкие коэффициенты - меньшее.</text>
+		<text>Обычно рекомендуется оставить значение на 0,1, но его можно увеличить, чтобы немного уменьшить размывание источников света. 
+			Это значение скейлится с коэффициентом усиления ПНВ, так что более высокие коэффициенты усиления имеют больший размыв, а более низкие - меньший размыв.</text>
 	</string>
 	
+	
 	<string id="ui_mcm_beef_nvg_nvg_view_through_scope_mcm">
-		<text>Использование ПНВ при прицеливании (недоступно в данной версии)</text>
+		<text>Возможность использовать ПНВ при прицеливании:</text>
 	</string>
 	
 	<string id="ui_mcm_beef_nvg_nvg_view_through_scope_mcm_desc">
-		<text>Если включено, Вы можете использовать ПНВ во время прицеливания. Если выключено - персонаж выключит ПНВ в прицеливании. </text>
+		<text>Если эта опция включена, вы можете держать свой ПНВ включенным во время прицеливания. Если опция отключена, ваш персонаж отключает ПНВ при прицеливании.</text>
 	</string>
-
 	
 	<string id="ui_mcm_beef_nvg_nvg_stays_pda_mcm">
-		<text>NVGs stay on when viewing PDA:</text>
+		<text>ПНВ остается включенным в КПК:</text>
 	</string>
 	
 	<string id="ui_mcm_beef_nvg_nvg_stays_pda_mcm_desc">
-		<text>If this box is unchecked, your NVGs automatically disable when looking at your PDA.</text>
+		<text>Если эта опция отключена, ПНВ автоматически отключается при просмотре вашего КПК.</text>
 	</string>
 	
 	<string id="ui_mcm_beef_nvg_nvg_gen1_tubes_mcm">
-		<text>Gen 1 Tube Setup: (Default single tube centered)</text>
+		<text>Расположение трубок у ПНВ 1 поколения:</text>
 	</string>
 	
 	<string id="ui_mcm_beef_nvg_nvg_gen1_tubes_mcm_desc">
-		<text>Choose the number of tubes for Gen 1 NVGs.</text>
+		<text>Выберите количество трубок для ПНВ 1 поколения. (по умолчанию 1 трубка посередине)</text>
 	</string>
 
 	<string id="ui_mcm_beef_nvg_nvg_gen2_tubes_mcm">
-		<text>Gen 2 Tube Setup: (Default dual tubes centered)</text>
+		<text>Расположение трубок у ПНВ 2 поколения:</text>
 	</string>
 	
 	<string id="ui_mcm_beef_nvg_nvg_gen2_tubes_mcm_desc">
-		<text>Choose the number of tubes for Gen 2 NVGs.</text>
+		<text>Выберите количество трубок для ПНВ 2 поколения. (по умолчанию 2 трубки посередине)</text>
 	</string>
 	
 	<string id="ui_mcm_beef_nvg_nvg_gen3_tubes_mcm">
-		<text>Gen 2 Tube Setup: (Default quad tubes centered)</text>
+		<text>Расположение трубок у ПНВ 3 поколения:</text>
 	</string>
 	
 	<string id="ui_mcm_beef_nvg_nvg_gen3_tubes_mcm_desc">
-		<text>Choose the number of tubes for Gen 3 NVGs.</text>
+		<text>Выберите количество трубок для ПНВ 3 поколения. (по умолчанию 4 трубки посередине)</text>
 	</string>
 
 	
 	<string id="ui_mcm_lst_single_centered">
-		<text>Single Tube, Centered</text>
+		<text>Одна трубка, посеридине</text>
 	</string>
 	
 	<string id="ui_mcm_lst_single_left">
-		<text>Single Tube, Left Side</text>
+		<text>Одна трубка, слева</text>
 	</string>
 	
 	<string id="ui_mcm_lst_single_right">
-		<text>Single Tube, Right Side</text>
+		<text>Одна трубка, справа</text>
 	</string>
 	
 	<string id="ui_mcm_lst_dual_centered">
-		<text>Dual Tubes, Centered</text>
+		<text>Две трубки, посередине</text>
 	</string>
 	
 	<string id="ui_mcm_lst_quad_centered">
-		<text>Quad Tubes, Centered</text>
+		<text>Четыре трубки, посередине</text>
 	</string>
 	
 	
 	
 	<string id="ui_mcm_beef_nvg_nvg_gen1_mode_mcm">
-		<text>Gen 1 Overlay Background: (Default is No Overlay)</text>
+		<text>Оверлей ПНВ 1 поколения:</text>
 	</string>
 	
 	<string id="ui_mcm_beef_nvg_nvg_gen1_mode_mcm_desc">
-		<text>Choose what background overlay you want</text>
+		<text>Выберите желаемый фоновый оверлей (по умолчанию Без оверлея)</text>
 	</string>
 
 	<string id="ui_mcm_beef_nvg_nvg_gen2_mode_mcm">
-		<text>Gen 2 Overlay Background: (Default is Blurred Overlay)</text>
+		<text>Оверлей ПНВ 2 поколения:</text>
 	</string>
 	
 	<string id="ui_mcm_beef_nvg_nvg_gen2_mode_mcm_desc">
-		<text>Choose what background overlay you want</text>
+		<text>Выберите желаемый фоновый оверлей (по умолчанию Размытый Оверлей)</text>
 	</string>
 	
 	<string id="ui_mcm_beef_nvg_nvg_gen3_mode_mcm">
-		<text>Gen 3 Overlay Background: (Default is Blurred Overlay)</text>
+		<text>Оверлей ПНВ 3 поколения:</text>
 	</string>
 	
 	<string id="ui_mcm_beef_nvg_nvg_gen3_mode_mcm_desc">
-		<text>Choose what background overlay you want</text>
+		<text>Выберите желаемый фоновый оверлей (по умолчанию Размытый Оверлей)</text>
 	</string>
 	
 	
 	<string id="ui_mcm_lst_blurred_background">
-		<text>Blurred Overlay</text>
+		<text>Размытый Оверлей</text>
 	</string>
 	
 	<string id="ui_mcm_lst_black_background">
-		<text>Black Overlay</text>
+		<text>Чёрный Оверлей</text>
 	</string>
 	
 	<string id="ui_mcm_lst_image_overlay">
-		<text>(Not implemented) Image Overlay</text>
+		<text>(Не реализовано) Оверлей Картинка</text>
 	</string>
 	
 	<string id="ui_mcm_lst_clear_vision">
-		<text>No Overlay (clear vision)</text>
+		<text>Без оверлея (четкая видимость)</text>
 	</string>
+	
 	
 </string_table>
