@@ -1,4 +1,5 @@
 #include "common.h"
+uniform float4  shader_param_8;
 
 ///////////////////////////////////////////////////////
 //      BEEF'S SHADER BASED NIGHT VISION EFFECT      //
@@ -18,14 +19,66 @@
 
 
 ///////////////////////////////////////////////////////
-// GLOBAL DEFINITIONS AND INCLUDES
+// USER SETTINGS HERE
 ///////////////////////////////////////////////////////
 
-
-	// UNIFORMS
-	uniform float4  shader_param_8;
+	//////// GLOBAL SETTINGS(ALL GENERATIONS)////////
+		#define tube_radius float (0.5f)						// This defines the size of circle. 0.5 touches top/bottom of screen, can adjust size to taste. +/- 0.1 to fit taste
+		#define sky_brightness_factor float (1.0f)			// Sky brightness factor. If your sky is too bright, decrease this slightly, if too dim, increase this slightly.
+		
+	// NVG CRT & NOISE VALUES 
+	//(BE AWARE THAT NOISE AND SCINTILLATION SCALE WITH NVG GAIN)
+		
+		#define gen_1_crt_effect_factor float(0.05)				// Default 0.05 - How much CRT effect to add to NVG image (0 = none, 1 = max).
+		#define gen_1_nvg_noise_factor float (0.15)				// Default 0.15 - How much noise to add to NVG image. (0 = none, 0.5 = insane)
+		#define gen_1_scintillation_constant float (0.999f) 	// Default 0.999 - The closer the number is to 1.00000, the less scintillation effect.
+		#define gen_1_luma_sharpen_factor float(0.0f)			// Default 0.0 - How much luma sharpen is added in. (0 = none, 1 = max)
+		
+		#define gen_2_crt_effect_factor float(0.07)				// Default 0.07 - How much CRT effect to add to NVG image (0 = none, 1 = max).
+		#define gen_2_nvg_noise_factor float (0.1)				// Default 0.15 - How much noise to add to NVG image. (0 = none, 0.5 = insane)
+		#define gen_2_scintillation_constant float (0.9991f) 	// Default 0.9991 - The closer the number is to 1.00000, the less scintillation effect.
+		#define gen_2_luma_sharpen_factor float(0.25f)			// Default 0.25f - How much luma sharpen is added in. (0 = none, 1 = max)
 	
-		// LUA PACKING
+		#define gen_3_crt_effect_factor float(0.1)				// Default 0.1 - How much CRT effect to add to NVG image (0 = none, 1 = max).
+		#define gen_3_nvg_noise_factor float (0.08)				// Default 0.15 - How much noise to add to NVG image. (0 = none, 0.5 = insane)
+		#define gen_3_scintillation_constant float (0.9992f) 	// Default 0.9992 - The closer the number is to 1.00000, the less scintillation effect.
+		#define gen_3_luma_sharpen_factor float(0.5f)			// Default 0.5 - How much luma sharpen is added in. (0 = none, 1 = max)
+		
+	// NVG COLOR OPTIONS:
+
+		#define gen_1_saturation_color float3 (0.7,1,0.6)	// Gen1 NVG color - it defines the max amount of color from 0 to 1 using (Red,Green,Blue)
+		#define gen_2_saturation_color float3 (0.5,1,0.4)	// Gen1 NVG color - it defines the max amount of color from 0 to 1 using (Red,Green,Blue)
+		#define gen_3_saturation_color float3 (0.2,1,0.9)	// Gen1 NVG color - it defines the max amount of color from 0 to 1 using (Red,Green,Blue)
+
+		// EXAMPLE COLOR SCHEMES:
+		//  (0.7,1,0.6) - gen 1 soft green
+		//	(0.5,1,0.4) - gen 2 hard green
+		//  (0.2,1,0.9) - gen 3 blueish
+		//	(1.0,1.0,1.0) - black and white
+		// 	(1.0,0.7,0.1) - yellow or amber color
+		
+///////////////////////////////////////////////////////
+// PROBABLY DON'T CHANGE STUFF BELOW HERE UNLESS YOU KNOW WHAT YOU'RE DOING
+///////////////////////////////////////////////////////
+										
+	// Constants
+		#define single_tube_centered float2(0.5f,0.5f)			// Single tube screen position (0.5, 0.5 is centered)
+		#define single_tube_offset_left float2(0.25f,0.5f)		// Single tube screen position (0.5, 0.5 is centered)
+		#define single_tube_offset_right float2(0.75f,0.5f)	// Single tube screen position (0.5, 0.5 is centered)
+		
+		#define dual_tube_offset_1 float2(0.25f,0.5f)			// Offset for dual tube left eye
+		#define dual_tube_offset_2 float2(0.75f,0.5f)			// Offset for dual tube right eye
+		
+		#define quad_tube_offset_1 float2(0.05f,0.5f)			// Offset for quad tube left outer tube
+		#define quad_tube_offset_2 float2(0.3f,0.5f)			// Offset for quad tube left inner tube
+		#define quad_tube_offset_3 float2(0.7f,0.5f)			// Offset for quad tube right inner tube
+		#define quad_tube_offset_4 float2(0.95f,0.5f)			// Offset for quad tube right outer tube
+	
+	#define luma_conversion_coeff float3 (0.299, 0.587, 0.114)// When we convert to YUV, these are the coefficients for Y (since we discard UV)
+	#define farthest_depth float (25.0f) 						// The farthest far place that we can reach in regards to DOF effects
+	
+	
+	// LUA PACKING
 		//	local x_1 = tostring(nvg_generation)                           -- Generation (1,2,3) - outputs 1.x to 3.x
 		//	local x_2 = tostring(nvg_num_tubes)                            -- Num Tubes (1,2,4,11,12) outputs x.1, x.2, x.4, x.11, or x.12
 		//	local y_1 = tostring(math.floor(nvg_gain_current * 10))        -- Gain Adjust (0.1 to 3) -- outputs 1.y to 30.y in 1. increment
@@ -49,48 +102,6 @@
 			// mode 2: image overlay
 			// mode 3: no changes (clear vision)
 
-									
-	// Constants
-	#define luma_conversion_coeff float3 (0.299, 0.587, 0.114) // When we convert to YUV, these are the coefficients for Y (since we discard UV)
-	#define farthest_depth float (25.0f) 				// The farthest far place that we can reach, maybe this is supposed to be 10k not 1k??
-	
-	
-	//////// GLOBAL SETTINGS(ALL GENERATIONS)////////
-	
-		#define tube_radius float (0.5f)
-		#define single_tube_centered float2(0.5f,0.5f)		// Single tube screen position (0.5, 0.5 is centered)
-		#define single_tube_offset_left float2(0.25f,0.5f)		// Single tube screen position (0.5, 0.5 is centered)
-		#define single_tube_offset_right float2(0.75f,0.5f)		// Single tube screen position (0.5, 0.5 is centered)
-		
-		#define dual_tube_offset_1 float2(0.25f,0.5f)		// Offset for dual tube left eye
-		#define dual_tube_offset_2 float2(0.75f,0.5f)		// Offset for dual tube right eye
-		
-		#define quad_tube_offset_1 float2(0.05f,0.5f)		// Offset for quad tube left outer tube
-		#define quad_tube_offset_2 float2(0.3f,0.5f)		// Offset for quad tube left inner tube
-		#define quad_tube_offset_3 float2(0.7f,0.5f)		// Offset for quad tube right inner tube
-		#define quad_tube_offset_4 float2(0.95f,0.5f)		// Offset for quad tube right outer tube
-
-	// NVG CRT & NOISE VALUES
-		
-		#define gen_1_crt_effect_factor float(0.05)				// How much CRT effect to add to NVG image (0 = none, 1 = max) (CRT effect makes it look like an old school Cathode Ray Tube television)
-		#define gen_1_nvg_noise_factor float (0.15)				// How much noise to add to NVG image (0.04 is default, anything greater than 0.15 is insane)
-		#define gen_1_scintillation_constant float (0.999f) 		// The closer the number is to 1.00000, the less scintillation effect. 0.9995f is a good default value. 0.9990 is stronger.
-		#define gen_1_luma_sharpen_factor float(0.0f)			// how much luma sharpen is added in
-		
-		#define gen_2_crt_effect_factor float(0.07)				// How much CRT effect to add to NVG image (0 = none, 1 = max) (CRT effect makes it look like an old school Cathode Ray Tube television)
-		#define gen_2_nvg_noise_factor float (0.1)				// How much noise to add to NVG image (0.04 is default, anything greater than 0.15 is insane)
-		#define gen_2_scintillation_constant float (0.9991f) 		// The closer the number is to 1.00000, the less scintillation effect. 0.9995f is a good default value. 0.9990 is stronger.
-		#define gen_2_luma_sharpen_factor float(0.25f)
-	
-		#define gen_3_crt_effect_factor float(0.1)				// How much CRT effect to add to NVG image (0 = none, 1 = max) (CRT effect makes it look like an old school Cathode Ray Tube television)
-		#define gen_3_nvg_noise_factor float (0.08)				// How much noise to add to NVG image (0.04 is default, anything greater than 0.15 is insane)
-		#define gen_3_scintillation_constant float (0.9992f) 		// The closer the number is to 1.00000, the less scintillation effect. 0.9995f is a good default value. 0.9990 is stronger.
-		#define gen_3_luma_sharpen_factor float(0.5f)
-		
-// NVG COLOR OPTIONS:
-		#define gen_1_saturation_color float3 (0.7,1,0.6)	// Gen1 NVG color - it defines the max amount of color from 0 to 1 using (Red,Green,Blue)
-		#define gen_2_saturation_color float3 (0.5,1,0.4)	// Gen1 NVG color - it defines the max amount of color from 0 to 1 using (Red,Green,Blue)
-		#define gen_3_saturation_color float3 (0.2,1,0.9)	// Gen1 NVG color - it defines the max amount of color from 0 to 1 using (Red,Green,Blue)
 	
 ///////////////////////////////////////////////////////
 // DEFINE NVG MASK (Credit to LVutner for huge assistance in designing the functions)

@@ -48,8 +48,8 @@ _out main( v2p I )
 			o.low.gb = 0.0f;
 			o.high.gb = 0.0f;
 			
-			o.low *= lua_param_nvg_gain_current;
-			o.high *= lua_param_nvg_gain_current;
+			o.low *= lua_param_nvg_gain_current * sky_brightness_factor;
+			o.high *= lua_param_nvg_gain_current * sky_brightness_factor;
 			
 			o.high = clamp(o.high,0.0,1.0);
 			o.low= clamp(o.low,0.0,1.0);
