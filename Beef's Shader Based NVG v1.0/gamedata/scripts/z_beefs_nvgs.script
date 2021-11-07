@@ -10,6 +10,7 @@ local nvg_mode_gen1 = 0.0					-- overlay mode gen 2
 local nvg_num_tubes_gen3 = 4.0 			-- number of tubes for NVG gen 3
 local nvg_mode_gen1 = 0.0					-- overlay mode gen 3
 local nvg_stays_pda = true				-- disable nvg on PDA?
+local shader_scope_compat = false 		-- compatibility with 2d shader scopes
 
 -- Variables
 local nvg_generation = 0		-- 1, 2, or 3
@@ -37,6 +38,7 @@ function on_option_change()
 		nvg_mode_gen2 = z_beefs_nvgs_mcm.get_config("nvg_gen2_mode_mcm")
 		nvg_mode_gen3 = z_beefs_nvgs_mcm.get_config("nvg_gen3_mode_mcm")
 		nvg_stays_pda = z_beefs_nvgs_mcm.get_config("nvg_stays_pda_mcm")
+		shader_scope_compat = z_beefs_nvgs_mcm.get_config("shader_scope_compat")
 end
 
 function pack_nvg_data()
@@ -157,13 +159,34 @@ function nvg_glitch(power)
 end
 
 local zoomed_in = false
-
+local tube_count_temp = 0
+local vignette_temp = 0
+local shader_scope_flag = false
 -- turn off nvgs when aiming down sights
 function actor_on_weapon_zoom_in()
 	if (not nvg_view_through_scope and item_device.nv_state) then
 			zoomed_in = true
 			get_console():execute("r__nightvision 0")
 			get_console():execute("shader_param_8 (0,0,0,0)")
+	elseif (shader_scope_compat and item_device.nv_state) then
+		local scopeName = nil
+		local wpn = db.actor:active_item()
+		if wpn:weapon_scope_status() == 2 then
+			if wpn:weapon_is_scope() then
+				local scope = utils_item.get_attached_scope(wpn)
+				scopeName = utils_item.get_param(scope, wpn:id(), "scope_texture", "string")
+			end
+		else
+			scopeName = utils_item.get_param(wpn:section(), wpn:id(), "scope_texture", "string")
+		end
+		if scopeName and scopeRadii.scopeRadii[scopeName] then
+			tube_count_temp = nvg_num_tubes
+			vignette_temp = vignette_current 
+			nvg_num_tubes = 1
+			vignette_current = 0.5 - scopeRadii.scopeRadii[scopeName]
+			update_nvgs()
+			shader_scope_flag = true
+		end
 	end
 end
 
@@ -171,6 +194,11 @@ end
 function actor_on_weapon_zoom_out()
 	if (not nvg_view_through_scope and item_device.nv_state) then
 		zoomed_in = false
+		update_nvgs()
+	elseif (shader_scope_compat and item_device.nv_state and shader_scope_flag) then
+		vignette_current = vignette_temp
+		nvg_num_tubes = tube_count_temp
+		shader_scope_flag = false
 		update_nvgs()
 	end
 end

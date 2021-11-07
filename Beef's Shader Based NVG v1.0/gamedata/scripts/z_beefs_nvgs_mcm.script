@@ -6,6 +6,7 @@ local defaults = {
 	["nvg_washout_thresh_mcm"] = 0.1,
 	["nvg_view_through_scope_mcm"] = false,
 	["nvg_stays_pda_mcm"] = true,
+	["shader_scope_compat"] = false,
 	["nvg_gen1_tubes_mcm"] = 1.0,
 	["nvg_gen2_tubes_mcm"] = 2.0,
 	["nvg_gen3_tubes_mcm"] = 4.0,
@@ -32,8 +33,10 @@ function on_mcm_load()
 			{id = "nvg_gen3_tubes_mcm", type = "list", val = 2, content={ {1.0,"single_centered"} , {1.1,"single_left"}, {1.2,"single_right"}, {2.0,"dual_centered"}, {4.0,"quad_centered"}}, def=4.0},
 			{id = "nvg_gen1_mode_mcm", type = "list", val = 2, content={ {0.0,"blurred_background"} , {1.0,"black_background"}, {2.0,"image_overlay"}, {3.0,"clear_vision"}}, def=3.0},
 			{id = "nvg_gen2_mode_mcm", type = "list", val = 2, content={ {0.0,"blurred_background"} , {1.0,"black_background"}, {2.0,"image_overlay"}, {3.0,"clear_vision"}}, def=0.0},
-			{id = "nvg_gen3_mode_mcm", type = "list", val = 2, content={ {0.0,"blurred_background"} , {1.0,"black_background"}, {2.0,"image_overlay"}, {3.0,"clear_vision"}}, def=0.0}
-        }
+			{id = "nvg_gen3_mode_mcm", type = "list", val = 2, content={ {0.0,"blurred_background"} , {1.0,"black_background"}, {2.0,"image_overlay"}, {3.0,"clear_vision"}}, def=0.0},
+			{id = "title",type= "slide",link= "ui_options_slider_player",text="ui_mcm_beef_nvg_title_2",size= {512,50},spacing= 20 },
+			{id = "shader_scope_compat", type = "check", val = 1, def=false}
+	  }
     }
     return op
 end

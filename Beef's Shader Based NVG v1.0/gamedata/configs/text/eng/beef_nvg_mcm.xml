@@ -8,6 +8,11 @@
 	<string id="ui_mcm_beef_nvg_title">
 		<text>Beef's NVG Settings</text>
 	</string>	
+	
+	<string id="ui_mcm_beef_nvg_title_2">
+		<text>Compatibility with Shader Based 2d Scopes</text>
+	</string>	
+	
 	<string id="ui_mcm_menu_beef_nvg">
 		<text>Beef's NVG</text>
 	</string>
@@ -151,5 +156,13 @@
 		<text>No Overlay (clear vision)</text>
 	</string>
 	
+	
+	<string id="ui_mcm_beef_nvg_shader_scope_compat">
+		<text>If you have Shader Based 2d Scope, check this box</text>
+	</string>
+	
+	<string id="ui_mcm_beef_nvg_shader_scope_compat_desc">
+		<text>Basically, due to shadering magic, if you have Shader Based 2d Scopes, you need to check this box. Otherwise, don't check this box.</text>
+	</string>
 	
 </string_table>
