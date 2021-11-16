@@ -1,3 +1,7 @@
+-----------------------------------------------------------------------------
+--		
+-----------------------------------------------------------------------------
+
 -- Beef NVG MCM values
 local nvg_gain_max = 2.0				-- max value for nvg gain (brightness)
 local nvg_gain_min = 0.5				-- min value for nvg gain (brightness)
@@ -23,11 +27,37 @@ local vignette_current = 1.0		-- current vignette value, for turn-on/ turn-off e
 local vignette_speed = 1.4 -- how fast vignette changes
 local glitch_power = 0			-- how much 'glitch' to add to NVGs
 local nvg_mode = 0			-- overlay preset
-local crt_latch = false
-local flip_latch = false
-local nv_eff = {}
-local flip_speed = 1.4
-local flip_down = 1			-- flip down value
+local crt_latch = false       -- latches crt effect on turn-on
+local flip_latch = false		-- latches flip down effect on turn-on
+local nv_eff = {}				-- to store the effect
+local flip_speed = 1.4			-- how fast to flip down
+local flip_down = 1			-- flip down value (1 all the way up, 100 all the way down)
+
+-- Variables for turn-on animation
+local torch_anm_state = 0
+local torch_anm_start = 0
+local torch_anm_time = 0
+local mc_anm_time_1 = 0
+local torch_anm_sec = "anim_headlamp"
+local mc_anm_sec = "anim_mask_clean"
+local snd_headlamp = sound_object('interface\\inv_torch')
+local hide_hand_speed = 1.5
+
+
+-- Variables for on-weapon zoom (and shader scopes compat)
+local zoomed_in = false
+local tube_count_temp = 0
+--local vignette_temp = 0
+local radius_temp
+local scope_blur_temp = 0
+local shader_scope_flag = false
+
+-- Variables for PDA auto-turn-off functionality
+local disable_nvg = false
+
+-----------------------------------------------------------------------------
+--		
+-----------------------------------------------------------------------------
 
 function on_option_change()
 		nvg_gain_max = z_beefs_nvgs_mcm.get_config("nvg_gain_max_mcm")
@@ -44,6 +74,11 @@ function on_option_change()
 		nvg_stays_pda = z_beefs_nvgs_mcm.get_config("nvg_stays_pda_mcm")
 		shader_scope_compat = z_beefs_nvgs_mcm.get_config("shader_scope_compat")
 end
+
+
+-----------------------------------------------------------------------------
+--		NVG DATA PACKING AND UPDATE FUNCTION
+-----------------------------------------------------------------------------
 
 function pack_nvg_data()
 
@@ -79,14 +114,11 @@ function update_nvgs()
 	get_console():execute("shader_param_7 " .. pack_nvg_data_2() )
 end
 
-local torch_anm_state = 0
-local torch_anm_start = 0
-local torch_anm_time = 0
-local mc_anm_time_1 = 0
-local torch_anm_sec = "anim_headlamp"
-local mc_anm_sec = "anim_mask_clean"
-local snd_headlamp = sound_object('interface\\inv_torch')
-local hide_hand_speed = 1.5
+
+
+-----------------------------------------------------------------------------
+--		NVG TURN ON AND TURN OFF FUNCTIONS, INCL ANIMATION
+-----------------------------------------------------------------------------
 
 function allow_animation()
 	return (torch_anm_state == 0  and game.hud_motion_allowed() and (not game.only_movekeys_allowed()) and actor_menu.get_last_mode() == 0 and (not IsMoveState("mcClimb")))
@@ -280,7 +312,10 @@ function item_device.set_nightvision(section,state)
 				CreateTimeEvent(0, "play_torch_toggle", det_hide_time, torch_toggle_anim)
 			end
 
-
+			RegisterScriptCallback("actor_on_update", actor_on_update)
+			RegisterScriptCallback("actor_on_weapon_zoom_in", actor_on_weapon_zoom_in)
+			RegisterScriptCallback("actor_on_weapon_zoom_out", actor_on_weapon_zoom_out)
+			RegisterScriptCallback("actor_on_info_callback",pda_check)
 
 
 		elseif (not state) and item_device.nv_state then
@@ -292,9 +327,17 @@ function item_device.set_nightvision(section,state)
 			flip_down = 1
 			utils_obj.play_sound("interface\\inv_nv_off")
 			item_device.nv_state = false
+			UnregisterScriptCallback("actor_on_update", actor_on_update)
+			UnregisterScriptCallback("actor_on_weapon_zoom_in", actor_on_weapon_zoom_in)
+			UnregisterScriptCallback("actor_on_weapon_zoom_out", actor_on_weapon_zoom_out)
+			UnregisterScriptCallback("actor_on_info_callback",pda_check)
 		end
 	end
 end
+
+-----------------------------------------------------------------------------
+--		NVG BRIGHTNESS ADJUSTMENT FUNCTION
+-----------------------------------------------------------------------------
 
 function brightness_adjust()
 	if item_device.nv_state then
@@ -324,7 +367,12 @@ function brightness_adjust()
 	end
 end
 
--- manipulate the vignette on 'turn on' to fade from black to nvg by manipulating vignette
+
+-----------------------------------------------------------------------------
+--		NVG STATE CHANGE EFFECT, MANIPULATES VIGNETTE AND LOCATION TO
+--			SIMUALATE FLIPPING DOWN AND TURNING ON NVGS
+-----------------------------------------------------------------------------
+
 function state_change_effect()
 	if not flip_latch and item_device.nv_state then
 		if flip_down < 100 then
@@ -349,6 +397,11 @@ function state_change_effect()
 	end
 end
 
+-----------------------------------------------------------------------------
+--		NVG GLITCH EFFECT, CALLED FROM ITEM_DEVICES AND GLITCHES NVG DURING
+--			PSY STORM AND BLOWOUT
+-----------------------------------------------------------------------------
+
 -- nvg glitch effect during blowouts and psy storms
 function nvg_glitch(power)
 	if item_device.nv_state then
@@ -361,15 +414,13 @@ function nvg_glitch(power)
 	end
 end
 
-local zoomed_in = false
-local tube_count_temp = 0
---local vignette_temp = 0
-local radius_temp
-local scope_blur_temp = 0
-local shader_scope_flag = false
--- turn off nvgs when aiming down sights and alter when using shader scopes
+-----------------------------------------------------------------------------
+--		TURNS OFF NVGS WHEN ADS, AS WELL AS CHANGE TO SINGLE CENTERED SCOPE
+--			WHEN USING SHADER SCOPES TO MAINTAIN COMPATIBILITY
+-----------------------------------------------------------------------------
+
 function actor_on_weapon_zoom_in()
-	if (not nvg_view_through_scope and item_device.nv_state) then
+	if ((not nvg_view_through_scope) or axr_main.binoc_is_zoomed) and item_device.nv_state then
 			zoomed_in = true
 			get_console():execute("r__nightvision 0")
 			get_console():execute("shader_param_8 (0,0,0,0)")
@@ -384,6 +435,7 @@ function actor_on_weapon_zoom_in()
 		else
 			scopeName = utils_item.get_param(wpn:section(), wpn:id(), "scope_texture", "string")
 		end
+		--local tex_active = get_console():get_integer("scope_2dtexactive")
 		if scopeName and scopeRadii.scopeRadii[scopeName] then
 			scope_blur_temp = get_console():get_float("scope_blur_inner")
 			tube_count_temp = nvg_num_tubes
@@ -391,30 +443,40 @@ function actor_on_weapon_zoom_in()
 			--vignette_temp = vignette_current 
 			nvg_num_tubes = 1
 			get_console():execute("scope_blur_inner 0")
-			nvg_radius = scopeRadii.scopeRadii[scopeName]
+			nvg_radius = math.min(scopeRadii.scopeRadii[scopeName],0.9)
 			--vignette_current = 0.5 - scopeRadii.scopeRadii[scopeName]
-			update_nvgs()
+			CreateTimeEvent("nvg_scope", "nvg_scope", 0.25, function()
+				update_nvgs()
+				return true 
+			end)
 			shader_scope_flag = true
 		end
 	end
 end
 
--- turn on nvgs when stop aiming down sights
+-----------------------------------------------------------------------------
+--		TURN NVGS BACK ON AFTER THEY'VE BEEN TEMPORARILY DISABLED BY ADS FUNCTION
+-----------------------------------------------------------------------------
+
 function actor_on_weapon_zoom_out()
-	if (not nvg_view_through_scope and item_device.nv_state) then
+	if (not nvg_view_through_scope and item_device.nv_state and zoomed_in) then
 		zoomed_in = false
 		update_nvgs()
 	elseif (shader_scope_compat and item_device.nv_state and shader_scope_flag) then
 		--vignette_current = vignette_temp
 		nvg_num_tubes = tube_count_temp
-		nvg_radius = radius_temp
+		--nvg_radius = radius_temp
+		nvg_radius = 0.5 -- hack to fix not correctly going back until i am better at this shit
 		get_console():execute("scope_blur_inner " .. scope_blur_temp)
+		RemoveTimeEvent("nvg_scope", "nvg_scope")
 		shader_scope_flag = false
 		update_nvgs()
 	end
 end
 
-local disable_nvg = false
+-----------------------------------------------------------------------------
+--		IF AUTO-TURN-OFF IS ENABLED, THEN AUTO DISABLE NVG WHEN BRING UP PDA
+-----------------------------------------------------------------------------
 
 function pda_check(npc,info_id)
 	local actor = db.actor
@@ -434,6 +496,11 @@ function pda_check(npc,info_id)
 	end
 end
 
+
+-----------------------------------------------------------------------------
+--		Actor on update Function - keep as minimal as possible
+-----------------------------------------------------------------------------
+
 function actor_on_update()
 	if (not crt_latch or not flip_latch) and item_device.nv_state then
 		state_change_effect()
@@ -441,22 +508,26 @@ function actor_on_update()
 	end
 end
 
+-----------------------------------------------------------------------------
+--		Keybinding Functions
+-----------------------------------------------------------------------------
+
 -- long press to turn on/off NVG, short press to change brightness
 function on_key_press()
 	return
 end
 
-function on_key_release()
+function on_key_release(key)
 	return
 end
 
+-----------------------------------------------------------------------------
+--		RegisterScriptCallback Functions
+-----------------------------------------------------------------------------
+
 function on_game_start()
-    RegisterScriptCallback("actor_on_update", actor_on_update)
-	RegisterScriptCallback("actor_on_weapon_zoom_in", actor_on_weapon_zoom_in)
-	RegisterScriptCallback("actor_on_weapon_zoom_out", actor_on_weapon_zoom_out)
 	RegisterScriptCallback("on_option_change", on_option_change)
 	RegisterScriptCallback("on_key_press", on_key_press)
 	RegisterScriptCallback("on_key_release", on_key_release)
-	RegisterScriptCallback("actor_on_info_callback",pda_check)
 	on_option_change()
 end
