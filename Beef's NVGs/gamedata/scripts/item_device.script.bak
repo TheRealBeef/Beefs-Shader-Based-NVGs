@@ -596,7 +596,7 @@ function set_nightvision_HUD(bShow)
 			nv_eff[torch_sec] = nv_eff[torch_sec] or ini_sys:r_string_ex(torch_sec,"nv_effect")
 			local ppe = ppe_effects[nv_eff[torch_sec]]
 			if ppe then
-				--wnd:InitTexture(ppe.ui)
+				wnd:InitTexture(ppe.ui)
 			end
 		end
 	end

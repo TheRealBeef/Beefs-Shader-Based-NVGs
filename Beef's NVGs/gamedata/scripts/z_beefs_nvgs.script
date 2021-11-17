@@ -51,10 +51,11 @@ local tube_count_temp = 0
 local radius_temp
 local scope_blur_temp = 0
 local shader_scope_flag = false
-
+local zoom = true
 -- Variables for PDA auto-turn-off functionality
 local disable_nvg = false
 
+local normal_fov
 -----------------------------------------------------------------------------
 --		
 -----------------------------------------------------------------------------
@@ -325,12 +326,13 @@ function item_device.set_nightvision(section,state)
 			flip_latch = false
 			vignette_current = 1.0
 			flip_down = 1
+			nvg_radius = 0.5 -- hack to fix not correctly going back until i am better at this shit
 			utils_obj.play_sound("interface\\inv_nv_off")
 			item_device.nv_state = false
-			UnregisterScriptCallback("actor_on_update", actor_on_update)
 			UnregisterScriptCallback("actor_on_weapon_zoom_in", actor_on_weapon_zoom_in)
 			UnregisterScriptCallback("actor_on_weapon_zoom_out", actor_on_weapon_zoom_out)
 			UnregisterScriptCallback("actor_on_info_callback",pda_check)
+			UnregisterScriptCallback("actor_on_update", actor_on_update)
 		end
 	end
 end
@@ -420,6 +422,7 @@ end
 -----------------------------------------------------------------------------
 
 function actor_on_weapon_zoom_in()
+	zoom = true
 	if ((not nvg_view_through_scope) or axr_main.binoc_is_zoomed) and item_device.nv_state then
 			zoomed_in = true
 			get_console():execute("r__nightvision 0")
@@ -459,6 +462,7 @@ end
 -----------------------------------------------------------------------------
 
 function actor_on_weapon_zoom_out()
+	zoom = false
 	if (not nvg_view_through_scope and item_device.nv_state and zoomed_in) then
 		zoomed_in = false
 		update_nvgs()
@@ -500,11 +504,34 @@ end
 -----------------------------------------------------------------------------
 --		Actor on update Function - keep as minimal as possible
 -----------------------------------------------------------------------------
-
+local tmr = 0
+local tmr_step = 200
 function actor_on_update()
+
 	if (not crt_latch or not flip_latch) and item_device.nv_state then
 		state_change_effect()
 		update_nvgs()
+	end
+	
+	tg = time_global()
+	if tg < tmr then return end
+	tmr = tg + tmr_step
+
+	if (not zoom) and (zoomed_in or shader_scope_flag) then
+		-- check for disable NVG while ADS
+		if (not nvg_view_through_scope and item_device.nv_state and zoomed_in) then
+			zoomed_in = false
+			update_nvgs()
+		elseif (shader_scope_compat and item_device.nv_state and shader_scope_flag) then
+			--vignette_current = vignette_temp
+			nvg_num_tubes = tube_count_temp
+			--nvg_radius = radius_temp
+			nvg_radius = 0.5 -- hack to fix not correctly going back until i am better at this shit
+			get_console():execute("scope_blur_inner " .. scope_blur_temp)
+			RemoveTimeEvent("nvg_scope", "nvg_scope")
+			shader_scope_flag = false
+			update_nvgs()
+		end
 	end
 end
 
@@ -525,9 +552,14 @@ end
 --		RegisterScriptCallback Functions
 -----------------------------------------------------------------------------
 
+local function actor_on_first_update()
+	normal_fov = device().fov * 0.7
+end
+
 function on_game_start()
 	RegisterScriptCallback("on_option_change", on_option_change)
 	RegisterScriptCallback("on_key_press", on_key_press)
 	RegisterScriptCallback("on_key_release", on_key_release)
+	RegisterScriptCallback("actor_on_first_update", actor_on_first_update)
 	on_option_change()
 end
