@@ -306,17 +306,14 @@ function item_device.set_nightvision(section,state)
 			torch_anm_state = 1
 			game.only_allow_movekeys(true)
 			game.set_actor_allow_ladder(false)
-			
+					
 			if (not db.actor:active_item() and not det_active) then
 				CreateTimeEvent(0, "play_torch_toggle", det_hide_time, torch_toggle_anim_fast)
 			else
 				CreateTimeEvent(0, "play_torch_toggle", det_hide_time, torch_toggle_anim)
 			end
 
-			RegisterScriptCallback("actor_on_update", actor_on_update)
-			RegisterScriptCallback("actor_on_weapon_zoom_in", actor_on_weapon_zoom_in)
-			RegisterScriptCallback("actor_on_weapon_zoom_out", actor_on_weapon_zoom_out)
-			RegisterScriptCallback("actor_on_info_callback",pda_check)
+
 
 
 		elseif (not state) and item_device.nv_state then
@@ -329,10 +326,6 @@ function item_device.set_nightvision(section,state)
 			nvg_radius = 0.5 -- hack to fix not correctly going back until i am better at this shit
 			utils_obj.play_sound("interface\\inv_nv_off")
 			item_device.nv_state = false
-			UnregisterScriptCallback("actor_on_weapon_zoom_in", actor_on_weapon_zoom_in)
-			UnregisterScriptCallback("actor_on_weapon_zoom_out", actor_on_weapon_zoom_out)
-			UnregisterScriptCallback("actor_on_info_callback",pda_check)
-			UnregisterScriptCallback("actor_on_update", actor_on_update)
 		end
 	end
 end
@@ -511,6 +504,7 @@ function actor_on_update()
 	if (not crt_latch or not flip_latch) and item_device.nv_state then
 		state_change_effect()
 		update_nvgs()
+		return
 	end
 	
 	tg = time_global()
@@ -538,7 +532,7 @@ end
 -----------------------------------------------------------------------------
 --		Keybinding Functions
 -----------------------------------------------------------------------------
-
+--[[
 -- long press to turn on/off NVG, short press to change brightness
 function on_key_press()
 	return
@@ -547,7 +541,7 @@ end
 function on_key_release(key)
 	return
 end
-
+]]--
 -----------------------------------------------------------------------------
 --		RegisterScriptCallback Functions
 -----------------------------------------------------------------------------
@@ -557,9 +551,13 @@ local function actor_on_first_update()
 end
 
 function on_game_start()
+	RegisterScriptCallback("actor_on_update", actor_on_update)
+	RegisterScriptCallback("actor_on_weapon_zoom_in", actor_on_weapon_zoom_in)
+	RegisterScriptCallback("actor_on_weapon_zoom_out", actor_on_weapon_zoom_out)
+	RegisterScriptCallback("actor_on_info_callback",pda_check)
 	RegisterScriptCallback("on_option_change", on_option_change)
-	RegisterScriptCallback("on_key_press", on_key_press)
-	RegisterScriptCallback("on_key_release", on_key_release)
+	--RegisterScriptCallback("on_key_press", on_key_press)
+	--RegisterScriptCallback("on_key_release", on_key_release)
 	RegisterScriptCallback("actor_on_first_update", actor_on_first_update)
 	on_option_change()
 end
