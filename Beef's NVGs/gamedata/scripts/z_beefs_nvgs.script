@@ -308,143 +308,17 @@ function item_device.set_nightvision(section,state)
 				return
 			end
 			
-			local weapon_zoomed = axr_main.weapon_is_zoomed and (not (IsPistol(db.actor:active_item(),nil)) or db.actor:active_detector())
-			local det_active = db.actor:active_detector() or nil
-			local det_hide_time = 0
-			local new_speed = 0
-			local anm_name = "script\\headlamp.anm"
-			local anm_additional_length = 0.45
-			
-			if (db.actor:active_item()) then
-				local itm = db.actor:active_item()
-				local hud = ini_sys:r_string_ex(itm:section(),"hud") or "hud_base"
-				local name = ini_sys:r_string_ex(hud,"gasmask_anm")
-				if (name) then
-					anm_name = name
-				else
-					local kind = ini_sys:r_string_ex(itm:section(),"kind") or nil
-					local class = ini_sys:r_string_ex(itm:section(),"class") or nil
-					if ((kind and lowered_anm_kinds[kind]) or (class and lowered_anm_classes[class])) then
-						anm_name = "script\\lower.anm"
-						anm_additional_length = 0.8
-					end
-				end
-				
-				if (not det_active and weapon_zoomed) then
-					if (get_console():get_bool("wpn_aim_toggle")) then
-						level.press_action(bind_to_dik(key_bindings.kWPN_ZOOM))
-					else
-						level.release_action(bind_to_dik(key_bindings.kWPN_ZOOM))
-					end
-				end
-			end
-			
-			if (det_active) then
-				if (weapon_zoomed) then
-					det_active:switch_state(2)
-					det_hide_time = (det_active:play_hud_motion("anm_zoom_hide_fast", true, 3, 1, 0) / 1000)
-					
-					if (get_console():get_bool("wpn_aim_toggle")) then
-						level.press_action(bind_to_dik(key_bindings.kWPN_ZOOM))
-					else
-						level.release_action(bind_to_dik(key_bindings.kWPN_ZOOM))
-					end
-				else
-					det_hide_time = (det_active:play_hud_motion("anm_hide_fast", true, 3, 2, 0) / 1000) + 0.1
-				end
-				
-				if (det_hide_time == 0) then 
-					det_hide_time = (det_active:play_hud_motion("anm_hide", true, 3, 3.5, 0) / 1000) + 0.1
-				end
-				
-				game.play_hud_anm(anm_name, 0, 0.25, 1, false)
-			end
-			
-			local function torch_toggle_anim_fast()
-				local time_g = time_global()
-				
-				if (torch_anm_state == 1) then
-					game.play_hud_motion(1, torch_anm_sec, "anm_switch", true, 0.75)
-					level.add_cam_effector("camera_effects\\headlamp\\headlamp.anm", 7539, false, "", 0, false)
-					torch_anm_start = time_g
-					torch_anm_state = 2
-					
-				elseif (torch_anm_state == 2) and (time_g > torch_anm_start + torch_anm_time - 350) then
-					torch_anm_state = 3
-					
-				elseif (torch_anm_state == 3) and (time_g > torch_anm_start + torch_anm_time + 1) then
-					update_nvgs()
-					utils_obj.play_sound("interface\\inv_nv_start")
-					item_device.nv_state = true
-					torch_anm_state = 0
-					torch_anm_start = 0
-					game.only_allow_movekeys(false)
-					game.set_actor_allow_ladder(true)
-					RemoveTimeEvent(0, "play_torch_toggle")
-				end
-								
-				return false
-			end
-			
-			local function torch_toggle_anim()
-				local time_g = time_global()
-				
-				if (torch_anm_state == 1) then
-					if (det_active) then
-						det_active:switch_state(3)
-						db.actor:force_hide_detector()
-					else
-						game.play_hud_anm(anm_name, 0, 1, 1, false)
-					end
-						
-					game.play_hud_motion(1, mc_anm_sec, "anm_hide_hand", true, hide_hand_speed)
-					new_speed = game.set_hud_anm_time(anm_name, ((torch_anm_time + mc_anm_time_1) / 1000) + anm_additional_length)
-					torch_anm_start = time_g
-					torch_anm_state = 2
-					
-				elseif (torch_anm_state == 2) and (time_g > torch_anm_start + mc_anm_time_1 - 10) then
-					game.play_hud_motion(1, torch_anm_sec, "anm_switch", true, 1)
-					level.add_cam_effector("camera_effects\\headlamp\\headlamp.anm", 7539, false, "", 0, false)
-					torch_anm_state = 3
-					
-				elseif (torch_anm_state == 3) and (time_g > torch_anm_start + mc_anm_time_1 + torch_anm_time - 550) then
-					torch_anm_state = 4
-					
-				elseif (torch_anm_state == 4) and (time_g > torch_anm_start + mc_anm_time_1 + torch_anm_time + 15) then
-					update_nvgs()
-					utils_obj.play_sound("interface\\inv_nv_start")
-					item_device.nv_state = true
-					if (new_speed) then game.play_hud_anm(anm_name, 2, new_speed, 1, false, true) end
-					if (det_active) then db.actor:show_detector(true) end
-					torch_anm_state = 5
-					
-				elseif (torch_anm_state == 5) and (time_g > torch_anm_start + mc_anm_time_1 + torch_anm_time + (anm_additional_length * 1000 + 100)) then
-					torch_anm_state = 0
-					torch_anm_start = 0
-					game.only_allow_movekeys(false)
-					game.set_actor_allow_ladder(true)
-					RemoveTimeEvent(0, "play_torch_toggle")
-				end
-				
-				return false
-			end
-			
-			torch_anm_state = 1
-			game.only_allow_movekeys(true)
-			game.set_actor_allow_ladder(false)
-			
-			RegisterScriptCallback("actor_on_update", actor_on_update)
-			RegisterScriptCallback("actor_on_weapon_zoom_in", actor_on_weapon_zoom_in)
-			RegisterScriptCallback("actor_on_weapon_zoom_out", actor_on_weapon_zoom_out)
-			RegisterScriptCallback("actor_on_info_callback",pda_check)
-			
-			if (not db.actor:active_item() and not det_active) then
-				CreateTimeEvent(0, "play_torch_toggle", det_hide_time, torch_toggle_anim_fast)
-			else
-				CreateTimeEvent(0, "play_torch_toggle", det_hide_time, torch_toggle_anim)
-			end
-
-
+			local hide_time = play_anim() + 0.5
+			CreateTimeEvent(0, "play_torch_enable", hide_time, function()
+				update_nvgs()
+				utils_obj.play_sound("interface\\inv_nv_start")
+				item_device.nv_state = true
+				RegisterScriptCallback("actor_on_update", actor_on_update)
+				RegisterScriptCallback("actor_on_weapon_zoom_in", actor_on_weapon_zoom_in)
+				RegisterScriptCallback("actor_on_weapon_zoom_out", actor_on_weapon_zoom_out)
+				RegisterScriptCallback("actor_on_info_callback",pda_check)
+				return true
+			end)
 
 
 		elseif (not state) and item_device.nv_state then
